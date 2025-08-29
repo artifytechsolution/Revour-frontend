@@ -1,0 +1,59 @@
+{
+  "id": "1f859e1d-21b7-43ec-adb8-4aee38f7c86f",
+  "hotel_id": 6,
+  "name": "Grand Palace Hotel",
+  "address": "123 Main Street, Downtown",
+  "city": "New York",
+  "country": "USA",
+  "phone": "+1-212-555-1234",
+  "email": "info3@grandpalacehotel.com",
+  "description": "Nestled in the heart of the vibrant city, [Hotel Name] offers a perfect blend of modern luxury and timeless comfort. Our elegantly designed rooms feature plush bedding, high-speed Wi-Fi, and stunning views of the city skyline or serene countryside",
+  "star_rating": 5,
+  "isHourly": true,
+  "createdAt": "2025-07-12T12:46:02.986Z",
+  "updatedAt": "2025-07-12T12:46:02.986Z",
+  "deletedAt": null,
+  "hotel_images": [
+    {
+      "image_id": 1,
+      "hotel_id": 6,
+      "image_url": "https://res.cloudinary.com/dqxivvdnm/image/upload/v1752326340/uploads/vtdycukvaf3umxky2ld0.jpg",
+      "description": null,
+      "is_primary": true,
+      "createdAt": "2025-07-12T13:19:01.639Z"
+    }
+  ],
+  "hotel_ratings": [
+    {
+      "rating_id": "b73ed8f4-59b3-4b1a-91f0-7894d3024670",
+      "hotel_id": 6,
+      "user_id": 1,
+      "rating": 5,
+      "comment": "Amazing hotel with great service!",
+      "status": "APPROVED",
+      "createdAt": "2025-07-13T11:41:48.074Z",
+      "updatedAt": "2025-07-13T11:41:48.074Z",
+      "deletedAt": null
+    }
+  ],
+  "room_types": [
+    {
+      "id": "abf9b881-3026-44f7-8113-0fa6d2fe9523",
+      "room_type_id": 2,
+      "hotel_id": 6,
+      "type_name": "Deluxe Suite",
+      "description": "A luxurious suite with ocean view and king-sized bed.",
+      "base_price": "4500",
+      "max_occupancy": 2
+    },
+    {
+      "id": "18a34fe6-d1b5-4b5c-bd9d-d0b31187e9f3",
+      "room_type_id": 3,
+      "hotel_id": 6,
+      "type_name": "Deluxe Suite",
+      "description": "A luxurious suite with ocean view and king-sized bed.",
+      "base_price": "4500",
+      "max_occupancy": 2
+    }
+  ]
+}
