@@ -225,11 +225,14 @@ const HotelBookingComponent: React.FC<{ params: any }> = ({ params }) => {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingPayload),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bookingPayload),
+        }
+      );
       const result = await response.json();
 
       if (result.error) throw new Error(result.error);
@@ -267,11 +270,14 @@ const HotelBookingComponent: React.FC<{ params: any }> = ({ params }) => {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingPayload),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bookingPayload),
+        }
+      );
       const order = await response.json();
 
       if (order.error) throw new Error(order.error);
@@ -284,11 +290,17 @@ const HotelBookingComponent: React.FC<{ params: any }> = ({ params }) => {
         name: hotelList.hotel.name,
         description: `Booking for ${hotelList.type_name}`,
         handler: async function (response: any) {
-          const verify = await fetch("http://localhost:8000/order/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...response, bill_id: order.data.bill_id }),
-          });
+          const verify = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order/verify`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...response,
+                bill_id: order.data.bill_id,
+              }),
+            }
+          );
           const result = await verify.json();
           toast.success(result.message || "Payment Successful!");
           router.push("/thankyou");

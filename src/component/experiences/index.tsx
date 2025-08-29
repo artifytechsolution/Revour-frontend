@@ -1179,11 +1179,14 @@ const ExperiencesComponent: React.FC = () => {
     try {
       setBookingLoading(true);
 
-      const response = await fetch("http://localhost:8000/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingPayload),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bookingPayload),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1224,14 +1227,17 @@ const ExperiencesComponent: React.FC = () => {
 
         handler: async function (response: any) {
           try {
-            const verify = await fetch("http://localhost:8000/order/verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                ...response,
-                bill_id: order.data.bill_id,
-              }),
-            });
+            const verify = await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order/verify`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  ...response,
+                  bill_id: order.data.bill_id,
+                }),
+              }
+            );
 
             if (!verify.ok) {
               throw new Error(

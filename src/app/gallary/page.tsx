@@ -7,26 +7,29 @@ const RazorpayPayment = () => {
     payButton.disabled = true;
 
     try {
-      const response = await fetch("http://localhost:8000/order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          hotel_id: "1f859e1d-21b7-43ec-adb8-4aee38f7c86f",
-          check_in_datetime: "2025-07-26T10:00:00",
-          check_out_datetime: "2025-07-26T16:00:00",
-          days: "2",
-          item_id: "abf9b881-3026-44f7-8113-0fa6d2fe9523",
-          total_amount: "2000",
-          booking_type: "HOTEL",
-          amount: 9000,
-          order_type: "HOTEL",
-          user_id: "4b2c3de9-5803-463e-83c3-309bb4c552e8",
-          currency: "INR",
-          tax_amount: 0,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            hotel_id: "1f859e1d-21b7-43ec-adb8-4aee38f7c86f",
+            check_in_datetime: "2025-07-26T10:00:00",
+            check_out_datetime: "2025-07-26T16:00:00",
+            days: "2",
+            item_id: "abf9b881-3026-44f7-8113-0fa6d2fe9523",
+            total_amount: "2000",
+            booking_type: "HOTEL",
+            amount: 9000,
+            order_type: "HOTEL",
+            user_id: "4b2c3de9-5803-463e-83c3-309bb4c552e8",
+            currency: "INR",
+            tax_amount: 0,
+          }),
+        }
+      );
 
       const order = await response.json();
       console.log("Order response:", order);
@@ -43,18 +46,21 @@ const RazorpayPayment = () => {
         order_id: order.data.order_id,
         name: "Your Company",
         description: `Purchase for ${order.data.order_type}`,
-        handler: async function (response) {
+        handler: async function (response: any) {
           try {
-            const verify = await fetch("http://localhost:8000/order/verify", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                ...response,
-                bill_id: order.data.bill_id,
-              }),
-            });
+            const verify = await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order/verify`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  ...response,
+                  bill_id: order.data.bill_id,
+                }),
+              }
+            );
 
             const result = await verify.json();
             console.log("Verification result:", result);
