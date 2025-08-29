@@ -9,14 +9,22 @@ import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@src/redux/store";
-import { selectUser } from "@src/redux/reducers/authSlice";
+import {
+  selectIsLogin,
+  selectUser,
+  setIsLogin,
+} from "@src/redux/reducers/authSlice";
 import Image from "next/image";
 import logo from "../../../public/logodata123.png";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  const isLogin = useSelector(selectIsLogin);
 
   const navLinks = [
     { name: "Hotels", path: "/home" },
@@ -27,6 +35,7 @@ export default function Header() {
   const isActive = (path: string) => pathname === path;
   const user = useAppSelector(selectUser);
   const submitLogout = () => {
+    dispatch(setIsLogin(false));
     localStorage.clear();
   };
 
@@ -64,7 +73,7 @@ export default function Header() {
           {/* Right Section */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Search Icon */}
-            {!user ? (
+            {!isLogin ? (
               <>
                 <Link
                   href="/login"

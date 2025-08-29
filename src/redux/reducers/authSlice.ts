@@ -6,7 +6,11 @@ import { RootState } from "../store";
 const initialState: any = {
   authToken: null,
   userData: null,
-  searchDetails: null, // ✅ always null initially, redux-persist will fill it later
+  searchDetails: null,
+
+  // Simple boolean states
+  isLogin: false,
+  isSignup: false,
 };
 
 export const authSlice = createSlice({
@@ -33,6 +37,22 @@ export const authSlice = createSlice({
     removeSearchDetails(state) {
       state.searchDetails = null;
     },
+
+    // Simple login state
+    setIsLogin(state, action: PayloadAction<boolean>) {
+      state.isLogin = action.payload;
+    },
+
+    // Simple signup state
+    setIsSignup(state, action: PayloadAction<boolean>) {
+      state.isSignup = action.payload;
+    },
+
+    // Reset both states
+    resetAuthStates(state) {
+      state.isLogin = false;
+      state.isSignup = false;
+    },
   },
 });
 
@@ -43,10 +63,14 @@ export const {
   removeAuthToken,
   setSearchDetails,
   removeSearchDetails,
+  setIsLogin,
+  setIsSignup,
+  resetAuthStates,
 } = authSlice.actions;
 
 export default authSlice.reducer;
 
+// Existing selectors
 export const selectAuthToken = (state: RootState) =>
   state?.app?.user?.authToken ?? null;
 
@@ -55,3 +79,10 @@ export const selectUser = (state: RootState) =>
 
 export const selectSearchDetails = (state: RootState) =>
   state?.app?.user?.searchDetails ?? null;
+
+// Simple boolean selectors
+export const selectIsLogin = (state: RootState) =>
+  state?.app?.user?.isLogin ?? false;
+
+export const selectIsSignup = (state: RootState) =>
+  state?.app?.user?.isSignup ?? false;

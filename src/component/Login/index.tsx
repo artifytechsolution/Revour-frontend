@@ -6,7 +6,11 @@ import { useUserLogin } from "@src/hooks/apiHooks";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { setAuthToken, setUser } from "@src/redux/reducers/authSlice";
+import {
+  setAuthToken,
+  setIsLogin,
+  setUser,
+} from "@src/redux/reducers/authSlice";
 import CustomInput from "../customeFormField";
 
 // MUI Icons
@@ -43,6 +47,7 @@ const LoginComponent = () => {
     if (loginData && !isLoginLoading) {
       dispatch(setUser(loginData.data));
       dispatch(setAuthToken(loginData.data.token));
+      dispatch(setIsLogin(true));
       toast.success(loginData?.message ?? "Login Successful");
       reset();
       router?.push("/home");
