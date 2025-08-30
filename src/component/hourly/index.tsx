@@ -931,36 +931,6 @@ const BookingPage = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          {/* Filter Buttons */}
-          <div className="flex flex-wrap gap-3 items-center">
-            <FontAwesomeIcon icon={faFilter} className="text-gray-500" />
-            {["all", "50", "60", "70", "80"].map((price) => (
-              <button
-                key={price}
-                onClick={() => handleFilterChange(price)}
-                className={`px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition ₹{
-                  filter === price
-                    ? "bg-green-600 text-white shadow-md"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-                }`}
-              >
-                {price === "all" ? "All Hotels" : `Under $${price}`}
-              </button>
-            ))}
-          </div>
-
-          {/* Results Summary */}
-          <div className="text-sm text-gray-600">
-            {!isLoading && !isError && (
-              <span>
-                Showing {displayedHotels.length} of {filteredHotels.length}{" "}
-                hotels
-                {searchQuery && ` matching "${searchQuery}"`}
-              </span>
-            )}
-          </div>
-        </div>
 
         {/* Main Layout */}
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 lg:gap-8">
