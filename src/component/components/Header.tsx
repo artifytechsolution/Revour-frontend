@@ -114,9 +114,12 @@ export default function Header() {
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center space-x-3">
-            <button className="text-gray-600 hover:text-green-600 transition-colors">
+            <Link
+              href={"/search"}
+              className="text-gray-600 hover:text-green-600 transition-colors"
+            >
               <SearchIcon />
-            </button>
+            </Link>
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="text-gray-600 hover:text-green-600 transition-colors"

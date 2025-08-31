@@ -2275,9 +2275,9 @@ const transformOrderToBooking = (order: OrderData): Booking => {
   };
 };
 
-// ✅ UPDATED: Current date to August 29, 2025
+// ✅ UPDATED: Current date set to August 30, 2025
 const getCurrentDate = (): Date => {
-  return new Date("2025-08-29T00:00:00.000Z");
+  return new Date("2025-08-30T00:00:00.000Z");
 };
 
 const isToday = (date: Date): boolean => {
@@ -2289,7 +2289,7 @@ const isToday = (date: Date): boolean => {
   );
 };
 
-// ✅ NEW: Check if date is in the future (after today)
+// ✅ Check if date is in the future (after today)
 const isFutureDate = (date: Date): boolean => {
   const today = getCurrentDate();
   const todayStart = new Date(
@@ -2304,6 +2304,23 @@ const isFutureDate = (date: Date): boolean => {
   );
 
   return dateStart > todayStart;
+};
+
+// ✅ Check if date is in the past (before today)
+const isPastDate = (date: Date): boolean => {
+  const today = getCurrentDate();
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const dateStart = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+
+  return dateStart < todayStart;
 };
 
 /* --------------------------- Helper Component ----------------------------- */
@@ -2390,6 +2407,177 @@ function BookingCardSkeleton() {
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Skeleton variant="rounded" width={100} height={32} />
           <Skeleton variant="rounded" width={70} height={32} />
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* -------------------------- Booking Card WITHOUT Image ---------------------------------- */
+function BookingCardWithoutImage({
+  status,
+  dateRange,
+  title,
+  description,
+  actionLabel,
+  onCancel,
+  isPast,
+  price,
+  paymentMethod,
+  bookingType,
+  duration,
+  orderId,
+  checkInDate,
+  onViewHotel,
+}: Booking & {
+  actionLabel: string;
+  onCancel?: () => void;
+  isPast: boolean;
+  onViewHotel?: () => void;
+}) {
+  const statusColor = status === "Completed" ? "success" : "info";
+  const isTodayBooking = checkInDate ? isToday(checkInDate) : false;
+  const isFutureBooking = checkInDate ? isFutureDate(checkInDate) : false;
+
+  // ✅ FIXED: Cancel button logic - NO cancel for today's bookings or past bookings
+  // Only show cancel button for future bookings (not past, not today, not cancelled)
+  const showCancelButton =
+    onCancel &&
+    !isPast &&
+    status !== "cancel" &&
+    !isTodayBooking && // ✅ No cancel for today's bookings
+    isFutureBooking; // Only future bookings can be cancelled
+
+  return (
+    <Card elevation={1}>
+      <CardContent sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 1,
+          }}
+        >
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <Chip
+                label={status}
+                color={statusColor}
+                size="small"
+                sx={{ fontWeight: 600 }}
+              />
+              {isTodayBooking && (
+                <Chip
+                  label="Today"
+                  size="small"
+                  color="warning"
+                  sx={{
+                    fontSize: "0.7rem",
+                    height: 20,
+                    fontWeight: 600,
+                    animation: "pulse 2s infinite",
+                  }}
+                />
+              )}
+            </Box>
+            <Typography variant="body2" component="span" color="text.secondary">
+              {dateRange}
+            </Typography>
+          </Box>
+          {price && (
+            <Typography
+              variant="h6"
+              component="div"
+              color="success.main"
+              fontWeight={600}
+            >
+              {price}
+            </Typography>
+          )}
+        </Box>
+
+        <Typography variant="h6" component="h3" fontWeight={600} gutterBottom>
+          {title}
+        </Typography>
+        <Typography
+          variant="body2"
+          component="div"
+          color="text.secondary"
+          sx={{
+            mb: 2,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {description}
+        </Typography>
+
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ mb: 2, flexWrap: "wrap", gap: 1 }}
+        >
+          {paymentMethod && (
+            <Chip
+              label={paymentMethod}
+              size="small"
+              variant="outlined"
+              color="primary"
+            />
+          )}
+          {duration && (
+            <Chip
+              label={duration}
+              size="small"
+              variant="outlined"
+              color="secondary"
+            />
+          )}
+          {bookingType && (
+            <Chip
+              label={bookingType}
+              size="small"
+              variant="outlined"
+              color="default"
+            />
+          )}
+        </Stack>
+
+        {orderId && (
+          <Typography
+            variant="caption"
+            component="div"
+            color="text.secondary"
+            sx={{ mb: 2 }}
+          >
+            Order ID: {orderId}
+          </Typography>
+        )}
+
+        <Divider sx={{ my: 2 }} />
+
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Button
+            variant={isPast ? "outlined" : "contained"}
+            color="success"
+            size="small"
+            onClick={onViewHotel}
+          >
+            {actionLabel}
+          </Button>
+          {showCancelButton && (
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          )}
         </Stack>
       </CardContent>
     </Card>
@@ -2513,10 +2701,9 @@ export default function ProfileComponent() {
     }
   };
 
-  // ✅ UPDATED: Process orderList and categorize into past/upcoming
+  // ✅ FIXED: Process orderList and categorize into past/upcoming with correct date logic
   useEffect(() => {
     if (Array.isArray(orderList) && orderList.length > 0) {
-      const currentDate = getCurrentDate();
       const pastBookings: Booking[] = [];
       const upcomingBookings: Booking[] = [];
 
@@ -2527,10 +2714,13 @@ export default function ProfileComponent() {
             order.reservation?.check_in_datetime || order.createdAt
           );
 
-          // Today and future bookings go to upcoming, only past goes to past
-          if (checkInDate < currentDate && !isToday(checkInDate)) {
+          // ✅ FIXED: Proper date categorization
+          // Past: Only dates before today (not including today)
+          // Upcoming: Today's bookings AND future bookings
+          if (isPastDate(checkInDate)) {
             pastBookings.push({ ...booking, status: booking.status });
           } else {
+            // Today and future bookings go to upcoming
             upcomingBookings.push({
               ...booking,
               status: booking.status,
@@ -2542,6 +2732,7 @@ export default function ProfileComponent() {
         }
       });
 
+      // Sort past bookings (most recent first)
       pastBookings.sort((a, b) => {
         const dateA = new Date(
           orderList.find((o: any) => o.order_id?.toString() === a.id)
@@ -2554,6 +2745,7 @@ export default function ProfileComponent() {
         return dateB.getTime() - dateA.getTime();
       });
 
+      // Sort upcoming bookings (earliest first)
       upcomingBookings.sort((a, b) => {
         const dateA = new Date(
           orderList.find((o: any) => o.order_id?.toString() === a.id)
@@ -2868,9 +3060,9 @@ export default function ProfileComponent() {
                       >
                         {profile.name}
                       </Typography>
-                      {/* <IconButton onClick={handleEditClick} size="small">
+                      <IconButton onClick={handleEditClick} size="small">
                         <EditIcon />
-                      </IconButton> */}
+                      </IconButton>
                     </Box>
                     <Typography
                       component="div"
@@ -3031,172 +3223,5 @@ export default function ProfileComponent() {
         </DialogActions>
       </Dialog>
     </>
-  );
-}
-
-/* -------------------------- Booking Card WITHOUT Image ---------------------------------- */
-function BookingCardWithoutImage({
-  status,
-  dateRange,
-  title,
-  description,
-  actionLabel,
-  onCancel,
-  isPast,
-  price,
-  paymentMethod,
-  bookingType,
-  duration,
-  orderId,
-  checkInDate,
-  onViewHotel,
-}: Booking & {
-  actionLabel: string;
-  onCancel?: () => void;
-  isPast: boolean;
-  onViewHotel?: () => void;
-}) {
-  const statusColor = status === "Completed" ? "success" : "info";
-  const isTodayBooking = checkInDate ? isToday(checkInDate) : false;
-  const isFutureBooking = checkInDate ? isFutureDate(checkInDate) : false;
-
-  // ✅ UPDATED: Cancel button logic
-  // Show cancel button only for future bookings (not past, not today)
-  const showCancelButton =
-    onCancel && !isPast && status !== "cancel" && isFutureBooking; // Only show for future dates
-
-  return (
-    <Card elevation={1}>
-      <CardContent sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 1,
-          }}
-        >
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <Chip
-                label={status}
-                color={statusColor}
-                size="small"
-                sx={{ fontWeight: 600 }}
-              />
-              {isTodayBooking && (
-                <Chip
-                  label="Today"
-                  size="small"
-                  color="warning"
-                  sx={{
-                    fontSize: "0.7rem",
-                    height: 20,
-                    fontWeight: 600,
-                    animation: "pulse 2s infinite",
-                  }}
-                />
-              )}
-            </Box>
-            <Typography variant="body2" component="span" color="text.secondary">
-              {dateRange}
-            </Typography>
-          </Box>
-          {price && (
-            <Typography
-              variant="h6"
-              component="div"
-              color="success.main"
-              fontWeight={600}
-            >
-              {price}
-            </Typography>
-          )}
-        </Box>
-
-        <Typography variant="h6" component="h3" fontWeight={600} gutterBottom>
-          {title}
-        </Typography>
-        <Typography
-          variant="body2"
-          component="div"
-          color="text.secondary"
-          sx={{
-            mb: 2,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {description}
-        </Typography>
-
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ mb: 2, flexWrap: "wrap", gap: 1 }}
-        >
-          {paymentMethod && (
-            <Chip
-              label={paymentMethod}
-              size="small"
-              variant="outlined"
-              color="primary"
-            />
-          )}
-          {duration && (
-            <Chip
-              label={duration}
-              size="small"
-              variant="outlined"
-              color="secondary"
-            />
-          )}
-          {bookingType && (
-            <Chip
-              label={bookingType}
-              size="small"
-              variant="outlined"
-              color="default"
-            />
-          )}
-        </Stack>
-
-        {orderId && (
-          <Typography
-            variant="caption"
-            component="div"
-            color="text.secondary"
-            sx={{ mb: 2 }}
-          >
-            Order ID: {orderId}
-          </Typography>
-        )}
-
-        <Divider sx={{ my: 2 }} />
-
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button
-            variant={isPast ? "outlined" : "contained"}
-            color="success"
-            size="small"
-            onClick={onViewHotel}
-          >
-            {actionLabel}
-          </Button>
-          {showCancelButton && (
-            <Button
-              variant="outlined"
-              color="error"
-              size="small"
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
   );
 }
