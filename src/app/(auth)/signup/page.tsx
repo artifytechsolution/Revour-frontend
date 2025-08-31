@@ -348,14 +348,14 @@ const SignupComponent = () => {
                 <p className="text-xs text-gray-600">
                   By signing up, you agree to our{" "}
                   <Link
-                    href="/terms"
+                    href="//privacypolicy"
                     className="text-green-600 hover:text-green-800 underline"
                   >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
                   <Link
-                    href="/privacy"
+                    href="//privacypolicy"
                     className="text-green-600 hover:text-green-800 underline"
                   >
                     Privacy Policy
@@ -371,7 +371,7 @@ const SignupComponent = () => {
               <p className="text-sm text-gray-600">
                 Need help?{" "}
                 <Link
-                  href="/contact"
+                  href="//privacypolicy"
                   className="text-green-600 hover:text-green-800 font-medium underline"
                 >
                   Contact Support

@@ -285,7 +285,7 @@ const LoginComponent = () => {
               <p className="text-sm text-gray-600">
                 Need help?{" "}
                 <Link
-                  href="/contact"
+                  href="/privacypolicy"
                   className="text-green-600 hover:text-green-800 font-medium underline"
                 >
                   Contact Support
