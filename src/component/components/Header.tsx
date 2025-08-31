@@ -35,8 +35,8 @@ export default function Header() {
   const isActive = (path: string) => pathname === path;
   const user = useAppSelector(selectUser);
   const submitLogout = () => {
-    dispatch(setIsLogin(false));
     localStorage.clear();
+    dispatch(setIsLogin(false));
   };
 
   return (
@@ -98,12 +98,15 @@ export default function Header() {
               </Link>
             )}
 
-            <Link
-              href="/profile"
-              className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors"
-            >
-              <AccountCircleIcon fontSize="large" />
-            </Link>
+            {isLogin && (
+              <Link
+                href="/profile"
+                className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors"
+              >
+                <AccountCircleIcon fontSize="large" />
+              </Link>
+            )}
+
             <button
               className="text-gray-600 hover:text-green-600 transition-colors"
               onClick={() => router.push("/search")}
@@ -165,29 +168,45 @@ export default function Header() {
               {link.name}
             </Link>
           ))}
+          {!isLogin ? (
+            <>
+              <Link
+                href="/login"
+                className="px-4 py-2 border border-green-600 text-green-600 rounded-md hover:bg-green-600 hover:text-white transition"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Sign Up
+              </Link>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                submitLogout();
+                setMobileMenuOpen(false);
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
+            >
+              Logout
+            </button>
+          )}
 
-          <Link
-            href="/login"
-            className="px-4 py-2 border border-green-600 text-green-600 rounded-md hover:bg-green-600 hover:text-white transition"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Login
-          </Link>
-          <Link
-            href="/signup"
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Sign Up
-          </Link>
-          <Link
-            href="/profile"
-            className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <AccountCircleIcon />
-            <span>Profile</span>
-          </Link>
+          {isLogin && (
+            <Link
+              href="/profile"
+              className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <AccountCircleIcon />
+              <span>Profile</span>
+            </Link>
+          )}
         </nav>
       </div>
     </header>

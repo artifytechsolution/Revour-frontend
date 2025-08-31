@@ -2142,12 +2142,20 @@ import {
   Divider,
   CircularProgress,
   Skeleton,
+  Container,
+  alpha,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import CameraAltIcon from "@mui/icons-material/CameraAlt";
-import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
-import CancelIcon from "@mui/icons-material/Cancel";
+import {
+  Close as CloseIcon,
+  CameraAlt as CameraAltIcon,
+  Edit as EditIcon,
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  Hotel as HotelIcon,
+  CalendarToday as CalendarIcon,
+  Payment as PaymentIcon,
+  AccessTime as AccessTimeIcon,
+} from "@mui/icons-material";
 import { useCancelOrder, useOrdersByusers } from "@src/hooks/apiHooks";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -2211,7 +2219,77 @@ interface OrderData {
   };
 }
 
-/* --------------------------- Helper Functions ----------------------------- */
+/* --------------------------- Updated Helper Functions ----------------------------- */
+const getCurrentDate = (): Date => {
+  return new Date("2025-08-31T00:00:00.000Z"); // Current date: August 31, 2025
+};
+
+// Check if booking is for today or tomorrow (both count as "today")
+const isTodayOrTomorrow = (date: Date): boolean => {
+  const today = getCurrentDate();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const dateStart = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const tomorrowStart = new Date(
+    tomorrow.getFullYear(),
+    tomorrow.getMonth(),
+    tomorrow.getDate()
+  );
+
+  return (
+    dateStart.getTime() === todayStart.getTime() ||
+    dateStart.getTime() === tomorrowStart.getTime()
+  );
+};
+
+// Check if date is in the future (after tomorrow)
+const isFutureDate = (date: Date): boolean => {
+  const today = getCurrentDate();
+  const dayAfterTomorrow = new Date(today);
+  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+
+  const dateStart = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+  const futureStart = new Date(
+    dayAfterTomorrow.getFullYear(),
+    dayAfterTomorrow.getMonth(),
+    dayAfterTomorrow.getDate()
+  );
+
+  return dateStart >= futureStart;
+};
+
+// Check if date is in the past (before today)
+const isPastDate = (date: Date): boolean => {
+  const today = getCurrentDate();
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const dateStart = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+
+  return dateStart < todayStart;
+};
+
+// Enhanced date range formatter for single day bookings
 const formatDateRange = (
   checkIn: string,
   checkOut: string,
@@ -2230,14 +2308,22 @@ const formatDateRange = (
     });
   };
 
+  // For hourly bookings (less than 24 hours)
   if (durationHours && durationHours < 24) {
     return `${formatDate(checkInDate)} (${durationHours} hours)`;
   }
 
-  if (checkInDate.toDateString() === checkOutDate.toDateString()) {
+  // Check if it's a same-day booking or consecutive days (like Aug 30 - Aug 31)
+  const daysDifference = Math.ceil(
+    (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  if (daysDifference <= 1) {
+    // Single day booking (same day or next day checkout)
     return formatDate(checkInDate);
   }
 
+  // Multi-day booking
   return `${formatDate(checkInDate)} – ${formatDate(checkOutDate)}`;
 };
 
@@ -2275,54 +2361,6 @@ const transformOrderToBooking = (order: OrderData): Booking => {
   };
 };
 
-// ✅ UPDATED: Current date set to August 30, 2025
-const getCurrentDate = (): Date => {
-  return new Date("2025-08-30T00:00:00.000Z");
-};
-
-const isToday = (date: Date): boolean => {
-  const today = getCurrentDate();
-  return (
-    date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate()
-  );
-};
-
-// ✅ Check if date is in the future (after today)
-const isFutureDate = (date: Date): boolean => {
-  const today = getCurrentDate();
-  const todayStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const dateStart = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
-
-  return dateStart > todayStart;
-};
-
-// ✅ Check if date is in the past (before today)
-const isPastDate = (date: Date): boolean => {
-  const today = getCurrentDate();
-  const todayStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const dateStart = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
-
-  return dateStart < todayStart;
-};
-
 /* --------------------------- Helper Component ----------------------------- */
 function TabPanel({
   children,
@@ -2335,7 +2373,7 @@ function TabPanel({
 }) {
   return (
     <div hidden={value !== index} role="tabpanel">
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
     </div>
   );
 }
@@ -2354,18 +2392,15 @@ function ProfileSkeleton() {
       <Box sx={{ position: "relative", textAlign: "center" }}>
         <Skeleton
           variant="circular"
-          width={120}
-          height={120}
-          sx={{
-            border: "4px solid white",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-          }}
+          width={{ xs: 80, sm: 100 }}
+          height={{ xs: 80, sm: 100 }}
+          sx={{ boxShadow: 1 }}
         />
       </Box>
 
       <Box sx={{ flex: 1, textAlign: { xs: "center", sm: "left" } }}>
-        <Skeleton variant="text" width="60%" height={48} sx={{ mb: 1 }} />
-        <Skeleton variant="text" width="40%" height={32} />
+        <Skeleton variant="text" width="60%" height={40} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width="40%" height={24} />
       </Box>
     </Box>
   );
@@ -2373,8 +2408,10 @@ function ProfileSkeleton() {
 
 function BookingCardSkeleton() {
   return (
-    <Card elevation={1}>
-      <CardContent sx={{ p: 3 }}>
+    <Card
+      sx={{ borderRadius: 2, border: "1px solid", borderColor: "grey.200" }}
+    >
+      <CardContent sx={{ p: 2.5 }}>
         <Box
           sx={{
             display: "flex",
@@ -2384,37 +2421,36 @@ function BookingCardSkeleton() {
           }}
         >
           <Box>
-            <Skeleton variant="rounded" width={80} height={24} sx={{ mb: 1 }} />
-            <Skeleton variant="text" width={120} height={20} />
+            <Skeleton variant="rounded" width={70} height={20} sx={{ mb: 1 }} />
+            <Skeleton variant="text" width={100} height={16} />
           </Box>
-          <Skeleton variant="text" width={60} height={28} />
+          <Skeleton variant="text" width={50} height={24} />
         </Box>
 
-        <Skeleton variant="text" width="80%" height={28} sx={{ mb: 1 }} />
-        <Skeleton variant="text" width="100%" height={20} sx={{ mb: 1 }} />
-        <Skeleton variant="text" width="70%" height={20} sx={{ mb: 2 }} />
+        <Skeleton variant="text" width="80%" height={24} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width="100%" height={16} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width="70%" height={16} sx={{ mb: 2 }} />
 
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <Skeleton variant="rounded" width={70} height={24} />
-          <Skeleton variant="rounded" width={60} height={24} />
-          <Skeleton variant="rounded" width={80} height={24} />
+          <Skeleton variant="rounded" width={60} height={20} />
+          <Skeleton variant="rounded" width={50} height={20} />
         </Stack>
 
-        <Skeleton variant="text" width="50%" height={16} sx={{ mb: 2 }} />
+        <Skeleton variant="text" width="40%" height={14} sx={{ mb: 2 }} />
 
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 1.5 }} />
 
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Skeleton variant="rounded" width={100} height={32} />
-          <Skeleton variant="rounded" width={70} height={32} />
+          <Skeleton variant="rounded" width={80} height={32} />
+          <Skeleton variant="rounded" width={60} height={32} />
         </Stack>
       </CardContent>
     </Card>
   );
 }
 
-/* -------------------------- Booking Card WITHOUT Image ---------------------------------- */
-function BookingCardWithoutImage({
+/* -------------------------- Enhanced Booking Card ---------------------------------- */
+function MinimalBookingCard({
   status,
   dateRange,
   title,
@@ -2435,145 +2471,324 @@ function BookingCardWithoutImage({
   isPast: boolean;
   onViewHotel?: () => void;
 }) {
-  const statusColor = status === "Completed" ? "success" : "info";
-  const isTodayBooking = checkInDate ? isToday(checkInDate) : false;
-  const isFutureBooking = checkInDate ? isFutureDate(checkInDate) : false;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return { bg: "#f0f9f4", color: "#16a34a", border: "#bbf7d0" };
+      case "Confirmed":
+        return { bg: "#eff6ff", color: "#2563eb", border: "#bfdbfe" };
+      case "cancel":
+        return { bg: "#fef2f2", color: "#dc2626", border: "#fecaca" };
+      default:
+        return { bg: "#f8fafc", color: "#64748b", border: "#e2e8f0" };
+    }
+  };
 
-  // ✅ FIXED: Cancel button logic - NO cancel for today's bookings or past bookings
-  // Only show cancel button for future bookings (not past, not today, not cancelled)
+  const statusColors = getStatusColor(status);
+  const isTodayTomorrowBooking = checkInDate
+    ? isTodayOrTomorrow(checkInDate)
+    : false;
+  const isFutureBooking = checkInDate ? isFutureDate(checkInDate) : false;
+  const today = getCurrentDate();
+
+  // Determine if it's today or tomorrow for badge display
+  const getTodayTomorrowLabel = () => {
+    if (!checkInDate) return "Soon";
+    const checkInDateString = checkInDate.toDateString();
+    const todayString = today.toDateString();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowString = tomorrow.toDateString();
+
+    if (checkInDateString === todayString) return "Today";
+    if (checkInDateString === tomorrowString) return "Tomorrow";
+    return "Soon";
+  };
+
+  // ✅ UPDATED CANCEL LOGIC:
+  // - No cancel for past bookings
+  // - No cancel for cancelled bookings
+  // - No cancel for today/tomorrow bookings (too close to check-in)
+  // - Only allow cancel for future bookings (day after tomorrow onwards)
   const showCancelButton =
     onCancel &&
     !isPast &&
     status !== "cancel" &&
-    !isTodayBooking && // ✅ No cancel for today's bookings
+    !isTodayTomorrowBooking && // ✅ No cancel for today/tomorrow
     isFutureBooking; // Only future bookings can be cancelled
 
   return (
-    <Card elevation={1}>
-      <CardContent sx={{ p: 3 }}>
+    <Card
+      sx={{
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: isTodayTomorrowBooking ? "#f59e0b" : "grey.200",
+        boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+        transition: "all 0.2s ease",
+        "&:hover": {
+          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+          transform: "translateY(-1px)",
+        },
+      }}
+    >
+      <CardContent sx={{ p: 2.5 }}>
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            mb: 1,
+            mb: 2,
           }}
         >
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <Chip
-                label={status}
-                color={statusColor}
-                size="small"
-                sx={{ fontWeight: 600 }}
-              />
-              {isTodayBooking && (
-                <Chip
-                  label="Today"
-                  size="small"
-                  color="warning"
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mb: 0.5 }}
+            >
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                  backgroundColor: statusColors.bg,
+                  border: `1px solid ${statusColors.border}`,
+                }}
+              >
+                <Typography
+                  variant="caption"
                   sx={{
-                    fontSize: "0.7rem",
-                    height: 20,
+                    color: statusColors.color,
                     fontWeight: 600,
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  {status}
+                </Typography>
+              </Box>
+              {isTodayTomorrowBooking && (
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    backgroundColor: "#fef3c7",
+                    border: "1px solid #fde68a",
                     animation: "pulse 2s infinite",
                   }}
-                />
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "#d97706",
+                      fontWeight: 600,
+                      fontSize: "0.75rem",
+                    }}
+                  >
+                    {getTodayTomorrowLabel()}
+                  </Typography>
+                </Box>
               )}
+            </Stack>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <CalendarIcon sx={{ fontSize: 14, color: "grey.500" }} />
+              <Typography
+                variant="body2"
+                color="grey.600"
+                sx={{ fontSize: "0.875rem" }}
+              >
+                {dateRange}
+              </Typography>
             </Box>
-            <Typography variant="body2" component="span" color="text.secondary">
-              {dateRange}
-            </Typography>
           </Box>
           {price && (
             <Typography
               variant="h6"
-              component="div"
-              color="success.main"
-              fontWeight={600}
+              sx={{
+                color: "#059669",
+                fontWeight: 700,
+                fontSize: "1.125rem",
+              }}
             >
               {price}
             </Typography>
           )}
         </Box>
 
-        <Typography variant="h6" component="h3" fontWeight={600} gutterBottom>
-          {title}
-        </Typography>
-        <Typography
-          variant="body2"
-          component="div"
-          color="text.secondary"
-          sx={{
-            mb: 2,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {description}
-        </Typography>
+        {/* Title & Description */}
+        <Box sx={{ mb: 2 }}>
+          <Box
+            sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 1 }}
+          >
+            <HotelIcon sx={{ fontSize: 18, color: "grey.500", mt: 0.2 }} />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                fontSize: "1rem",
+                color: "grey.900",
+                lineHeight: 1.3,
+              }}
+            >
+              {title}
+            </Typography>
+          </Box>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "grey.600",
+              fontSize: "0.875rem",
+              lineHeight: 1.4,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              ml: 3,
+            }}
+          >
+            {description}
+          </Typography>
+        </Box>
 
+        {/* Details */}
         <Stack
           direction="row"
           spacing={1}
-          sx={{ mb: 2, flexWrap: "wrap", gap: 1 }}
+          sx={{ mb: 2, flexWrap: "wrap", gap: 0.5 }}
         >
           {paymentMethod && (
-            <Chip
-              label={paymentMethod}
-              size="small"
-              variant="outlined"
-              color="primary"
-            />
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                backgroundColor: alpha("#3b82f6", 0.1),
+                border: `1px solid ${alpha("#3b82f6", 0.2)}`,
+              }}
+            >
+              <PaymentIcon sx={{ fontSize: 12, color: "#3b82f6" }} />
+              <Typography
+                variant="caption"
+                sx={{ color: "#3b82f6", fontSize: "0.75rem", fontWeight: 500 }}
+              >
+                {paymentMethod}
+              </Typography>
+            </Box>
           )}
           {duration && (
-            <Chip
-              label={duration}
-              size="small"
-              variant="outlined"
-              color="secondary"
-            />
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                backgroundColor: alpha("#8b5cf6", 0.1),
+                border: `1px solid ${alpha("#8b5cf6", 0.2)}`,
+              }}
+            >
+              <AccessTimeIcon sx={{ fontSize: 12, color: "#8b5cf6" }} />
+              <Typography
+                variant="caption"
+                sx={{ color: "#8b5cf6", fontSize: "0.75rem", fontWeight: 500 }}
+              >
+                {duration}
+              </Typography>
+            </Box>
           )}
           {bookingType && (
-            <Chip
-              label={bookingType}
-              size="small"
-              variant="outlined"
-              color="default"
-            />
+            <Box
+              sx={{
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                backgroundColor: alpha("#6b7280", 0.1),
+                border: `1px solid ${alpha("#6b7280", 0.2)}`,
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{ color: "#6b7280", fontSize: "0.75rem", fontWeight: 500 }}
+              >
+                {bookingType}
+              </Typography>
+            </Box>
           )}
         </Stack>
 
+        {/* Order ID */}
         {orderId && (
           <Typography
             variant="caption"
-            component="div"
-            color="text.secondary"
-            sx={{ mb: 2 }}
+            sx={{
+              color: "grey.500",
+              fontSize: "0.75rem",
+              fontFamily: "monospace",
+              mb: 2,
+              display: "block",
+            }}
           >
-            Order ID: {orderId}
+            Order: {orderId}
           </Typography>
         )}
 
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 1.5, borderColor: "grey.200" }} />
 
+        {/* Actions */}
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Button
             variant={isPast ? "outlined" : "contained"}
-            color="success"
             size="small"
             onClick={onViewHotel}
+            sx={{
+              borderRadius: 1.5,
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+              px: 2,
+              ...(isPast
+                ? {
+                    borderColor: "#059669",
+                    color: "#059669",
+                    "&:hover": {
+                      backgroundColor: alpha("#059669", 0.05),
+                      borderColor: "#047857",
+                    },
+                  }
+                : {
+                    backgroundColor: "#059669",
+                    "&:hover": {
+                      backgroundColor: "#047857",
+                    },
+                  }),
+            }}
           >
             {actionLabel}
           </Button>
           {showCancelButton && (
             <Button
               variant="outlined"
-              color="error"
               size="small"
               onClick={onCancel}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+                px: 2,
+                borderColor: "#dc2626",
+                color: "#dc2626",
+                "&:hover": {
+                  backgroundColor: alpha("#dc2626", 0.05),
+                  borderColor: "#b91c1c",
+                },
+              }}
             >
               Cancel
             </Button>
@@ -2701,7 +2916,7 @@ export default function ProfileComponent() {
     }
   };
 
-  // ✅ FIXED: Process orderList and categorize into past/upcoming with correct date logic
+  // ✅ UPDATED: Enhanced booking categorization logic
   useEffect(() => {
     if (Array.isArray(orderList) && orderList.length > 0) {
       const pastBookings: Booking[] = [];
@@ -2714,13 +2929,13 @@ export default function ProfileComponent() {
             order.reservation?.check_in_datetime || order.createdAt
           );
 
-          // ✅ FIXED: Proper date categorization
-          // Past: Only dates before today (not including today)
-          // Upcoming: Today's bookings AND future bookings
+          // ✅ NEW LOGIC:
+          // - Past: Only dates before today
+          // - Upcoming: Today, tomorrow, and future dates
           if (isPastDate(checkInDate)) {
             pastBookings.push({ ...booking, status: booking.status });
           } else {
-            // Today and future bookings go to upcoming
+            // Today, tomorrow, and future bookings go to upcoming
             upcomingBookings.push({
               ...booking,
               status: booking.status,
@@ -2734,28 +2949,42 @@ export default function ProfileComponent() {
 
       // Sort past bookings (most recent first)
       pastBookings.sort((a, b) => {
-        const dateA = new Date(
-          orderList.find((o: any) => o.order_id?.toString() === a.id)
-            ?.createdAt || ""
+        const orderA = orderList.find(
+          (o: any) => o.order_id?.toString() === a.id
         );
-        const dateB = new Date(
-          orderList.find((o: any) => o.order_id?.toString() === b.id)
-            ?.createdAt || ""
+        const orderB = orderList.find(
+          (o: any) => o.order_id?.toString() === b.id
         );
+        const dateA = new Date(orderA?.createdAt || "");
+        const dateB = new Date(orderB?.createdAt || "");
         return dateB.getTime() - dateA.getTime();
       });
 
-      // Sort upcoming bookings (earliest first)
+      // Sort upcoming bookings (today/tomorrow first, then by check-in date)
       upcomingBookings.sort((a, b) => {
-        const dateA = new Date(
-          orderList.find((o: any) => o.order_id?.toString() === a.id)
-            ?.reservation?.check_in_datetime || ""
+        const orderA = orderList.find(
+          (o: any) => o.order_id?.toString() === a.id
         );
-        const dateB = new Date(
-          orderList.find((o: any) => o.order_id?.toString() === b.id)
-            ?.reservation?.check_in_datetime || ""
+        const orderB = orderList.find(
+          (o: any) => o.order_id?.toString() === b.id
         );
-        return dateA.getTime() - dateB.getTime();
+
+        const checkInA = new Date(
+          orderA?.reservation?.check_in_datetime || orderA?.createdAt || ""
+        );
+        const checkInB = new Date(
+          orderB?.reservation?.check_in_datetime || orderB?.createdAt || ""
+        );
+
+        const isATodayTomorrow = isTodayOrTomorrow(checkInA);
+        const isBTodayTomorrow = isTodayOrTomorrow(checkInB);
+
+        // Prioritize today/tomorrow bookings first
+        if (isATodayTomorrow && !isBTodayTomorrow) return -1;
+        if (!isATodayTomorrow && isBTodayTomorrow) return 1;
+
+        // Then sort by check-in date (earliest first)
+        return checkInA.getTime() - checkInB.getTime();
       });
 
       setPast(pastBookings);
@@ -2871,23 +3100,18 @@ export default function ProfileComponent() {
   }, [hotelMutation, user?.id]);
 
   return (
-    <>
-      <Box
-        sx={{
-          maxWidth: 1200,
-          mx: "auto",
-          px: { xs: 2, md: 3 },
-          py: { xs: 4, md: 6 },
-        }}
-      >
-        {/* --------------------- Profile Header -------------------- */}
+    <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 } }}>
+      <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+        {/* Profile Header */}
         <Paper
-          elevation={2}
           sx={{
-            p: { xs: 3, md: 4 },
-            mb: 4,
-            borderRadius: 3,
-            background: "linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%)",
+            p: { xs: 2.5, sm: 3 },
+            mb: 3,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "grey.200",
+            backgroundColor: "#fafbfc",
+            boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
           }}
         >
           {isHotelLoading ? (
@@ -2901,16 +3125,16 @@ export default function ProfileComponent() {
                 gap: 3,
               }}
             >
-              {/* Profile Photo with Upload */}
+              {/* Profile Photo */}
               <Box sx={{ position: "relative", textAlign: "center" }}>
                 <Avatar
                   src={profile.avatar}
                   alt="Profile"
                   sx={{
-                    width: { xs: 100, md: 120 },
-                    height: { xs: 100, md: 120 },
-                    border: "4px solid white",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+                    width: { xs: 80, sm: 100 },
+                    height: { xs: 80, sm: 100 },
+                    border: "2px solid white",
+                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                     ...(isUploading && {
                       opacity: 0.7,
                       filter: "blur(1px)",
@@ -2931,20 +3155,20 @@ export default function ProfileComponent() {
                     <CircularProgress
                       variant="determinate"
                       value={uploadProgress}
-                      size={60}
+                      size={50}
                       thickness={4}
-                      sx={{ color: "success.main" }}
+                      sx={{ color: "#059669" }}
                     />
                     <Typography
                       variant="caption"
-                      component="span"
                       sx={{
                         position: "absolute",
                         top: "50%",
                         left: "50%",
                         transform: "translate(-50%, -50%)",
-                        color: "success.main",
+                        color: "#059669",
                         fontWeight: 600,
+                        fontSize: "0.75rem",
                       }}
                     >
                       {uploadProgress}%
@@ -2957,18 +3181,18 @@ export default function ProfileComponent() {
                   disabled={isUploading}
                   sx={{
                     position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    bgcolor: "success.main",
+                    bottom: -2,
+                    right: -2,
+                    bgcolor: "#059669",
                     color: "white",
-                    width: 40,
-                    height: 40,
-                    "&:hover": { bgcolor: "success.dark" },
+                    width: 32,
+                    height: 32,
+                    boxShadow: 1,
+                    "&:hover": { bgcolor: "#047857" },
                     "&:disabled": {
                       bgcolor: "grey.400",
                       color: "grey.600",
                     },
-                    boxShadow: 2,
                   }}
                 >
                   <input
@@ -2977,15 +3201,19 @@ export default function ProfileComponent() {
                     type="file"
                     onChange={handlePhotoChange}
                   />
-                  <CameraAltIcon fontSize="small" />
+                  <CameraAltIcon sx={{ fontSize: 16 }} />
                 </IconButton>
 
                 {isUploading && (
                   <Typography
                     variant="caption"
-                    component="div"
-                    color="success.main"
-                    sx={{ mt: 1, fontWeight: 600 }}
+                    sx={{
+                      mt: 1,
+                      fontWeight: 600,
+                      color: "#059669",
+                      fontSize: "0.75rem",
+                      display: "block",
+                    }}
                   >
                     Uploading...
                   </Typography>
@@ -3000,6 +3228,7 @@ export default function ProfileComponent() {
                       fullWidth
                       label="Name"
                       variant="outlined"
+                      size="small"
                       value={editedProfile.name}
                       onChange={(e) =>
                         setEditedProfile({
@@ -3007,12 +3236,18 @@ export default function ProfileComponent() {
                           name: e.target.value,
                         })
                       }
-                      sx={{ "& .MuiOutlinedInput-root": { bgcolor: "white" } }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          bgcolor: "white",
+                          borderRadius: 1.5,
+                        },
+                      }}
                     />
                     <TextField
                       fullWidth
                       label="Bio"
                       variant="outlined"
+                      size="small"
                       value={editedProfile.bio}
                       onChange={(e) =>
                         setEditedProfile({
@@ -3020,22 +3255,43 @@ export default function ProfileComponent() {
                           bio: e.target.value,
                         })
                       }
-                      sx={{ "& .MuiOutlinedInput-root": { bgcolor: "white" } }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          bgcolor: "white",
+                          borderRadius: 1.5,
+                        },
+                      }}
                     />
                     <Stack direction="row" spacing={1}>
                       <Button
                         variant="contained"
-                        color="success"
                         startIcon={<SaveIcon />}
                         onClick={handleSaveProfile}
+                        sx={{
+                          backgroundColor: "#059669",
+                          borderRadius: 1.5,
+                          textTransform: "none",
+                          fontWeight: 600,
+                          "&:hover": { backgroundColor: "#047857" },
+                        }}
                       >
                         Save
                       </Button>
                       <Button
                         variant="outlined"
-                        color="error"
                         startIcon={<CancelIcon />}
                         onClick={handleCancelEdit}
+                        sx={{
+                          borderColor: "#dc2626",
+                          color: "#dc2626",
+                          borderRadius: 1.5,
+                          textTransform: "none",
+                          fontWeight: 600,
+                          "&:hover": {
+                            backgroundColor: alpha("#dc2626", 0.05),
+                            borderColor: "#b91c1c",
+                          },
+                        }}
                       >
                         Cancel
                       </Button>
@@ -3049,25 +3305,37 @@ export default function ProfileComponent() {
                         alignItems: "center",
                         gap: 1,
                         justifyContent: { xs: "center", sm: "flex-start" },
-                        mb: 1,
+                        mb: 0.5,
                       }}
                     >
                       <Typography
-                        variant="h4"
-                        component="h1"
-                        fontWeight={700}
-                        color="text.primary"
+                        variant="h5"
+                        sx={{
+                          fontWeight: 700,
+                          color: "#111827",
+                          fontSize: { xs: "1.5rem", sm: "1.875rem" },
+                        }}
                       >
                         {profile.name}
                       </Typography>
-                      <IconButton onClick={handleEditClick} size="small">
-                        <EditIcon />
-                      </IconButton>
+                      <IconButton
+                        onClick={handleEditClick}
+                        size="small"
+                        sx={{
+                          color: "#6b7280",
+                          "&:hover": {
+                            color: "#374151",
+                            backgroundColor: alpha("#6b7280", 0.1),
+                          },
+                        }}
+                      ></IconButton>
                     </Box>
                     <Typography
-                      component="div"
-                      color="text.secondary"
-                      sx={{ mb: 2, fontSize: "1.1rem" }}
+                      sx={{
+                        color: "#6b7280",
+                        fontSize: "1rem",
+                        fontWeight: 500,
+                      }}
                     >
                       {profile.bio} • {profile.joinDate}
                     </Typography>
@@ -3078,24 +3346,37 @@ export default function ProfileComponent() {
           )}
         </Paper>
 
-        {/* ------------------------ Bookings Section -------------------------- */}
-        <Paper elevation={2} sx={{ borderRadius: 3, overflow: "hidden" }}>
+        {/* Bookings Section */}
+        <Paper
+          sx={{
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "grey.200",
+            overflow: "hidden",
+            boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+          }}
+        >
           <Tabs
             value={tab}
             onChange={(_, v) => setTab(v)}
             sx={{
-              bgcolor: "grey.50",
+              bgcolor: "#f8fafc",
+              borderBottom: "1px solid",
+              borderColor: "grey.200",
+              minHeight: 48,
               "& .MuiTab-root": {
                 fontWeight: 600,
-                fontSize: "1rem",
-                color: "text.secondary",
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                textTransform: "none",
+                minHeight: 48,
                 "&.Mui-selected": {
-                  color: "success.main",
+                  color: "#059669",
                 },
               },
               "& .MuiTabs-indicator": {
-                backgroundColor: "success.main",
-                height: 3,
+                backgroundColor: "#059669",
+                height: 2,
               },
             }}
             variant="fullWidth"
@@ -3104,10 +3385,10 @@ export default function ProfileComponent() {
             <Tab label={`Upcoming Bookings (${upcoming.length})`} />
           </Tabs>
 
-          <Box sx={{ p: 3 }}>
+          <Box sx={{ p: { xs: 2, sm: 2.5 } }}>
             <TabPanel value={tab} index={0}>
               {isHotelLoading ? (
-                <Stack spacing={3}>
+                <Stack spacing={2}>
                   {[1, 2, 3].map((i) => (
                     <BookingCardSkeleton key={i} />
                   ))}
@@ -3116,23 +3397,26 @@ export default function ProfileComponent() {
                 <Box sx={{ textAlign: "center", py: 6 }}>
                   <Typography
                     variant="h6"
-                    component="h2"
-                    color="text.secondary"
-                    gutterBottom
+                    sx={{
+                      color: "#6b7280",
+                      fontWeight: 600,
+                      mb: 1,
+                      fontSize: "1.125rem",
+                    }}
                   >
                     No past bookings yet
                   </Typography>
-                  <Typography component="div" color="text.secondary">
+                  <Typography sx={{ color: "#9ca3af", fontSize: "0.875rem" }}>
                     Your completed stays will appear here
                   </Typography>
                 </Box>
               ) : (
-                <Stack spacing={3}>
+                <Stack spacing={2}>
                   {past.map((booking) => (
-                    <BookingCardWithoutImage
+                    <MinimalBookingCard
                       key={booking.id}
                       {...booking}
-                      actionLabel="VISIT HOTELS"
+                      actionLabel="Visit Hotels"
                       isPast={true}
                       onViewHotel={handleViewHotel}
                     />
@@ -3143,7 +3427,7 @@ export default function ProfileComponent() {
 
             <TabPanel value={tab} index={1}>
               {isHotelLoading ? (
-                <Stack spacing={3}>
+                <Stack spacing={2}>
                   {[1, 2, 3].map((i) => (
                     <BookingCardSkeleton key={i} />
                   ))}
@@ -3152,34 +3436,47 @@ export default function ProfileComponent() {
                 <Box sx={{ textAlign: "center", py: 6 }}>
                   <Typography
                     variant="h6"
-                    component="h2"
-                    color="text.secondary"
-                    gutterBottom
+                    sx={{
+                      color: "#6b7280",
+                      fontWeight: 600,
+                      mb: 1,
+                      fontSize: "1.125rem",
+                    }}
                   >
                     No upcoming bookings
                   </Typography>
                   <Typography
-                    component="div"
-                    color="text.secondary"
-                    sx={{ mb: 2 }}
+                    sx={{
+                      color: "#9ca3af",
+                      fontSize: "0.875rem",
+                      mb: 3,
+                    }}
                   >
                     Book your next adventure today!
                   </Typography>
                   <Button
                     variant="contained"
-                    color="success"
                     onClick={handleViewHotel}
+                    sx={{
+                      backgroundColor: "#059669",
+                      borderRadius: 1.5,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      px: 3,
+                      py: 1,
+                      "&:hover": { backgroundColor: "#047857" },
+                    }}
                   >
                     Explore Hotels
                   </Button>
                 </Box>
               ) : (
-                <Stack spacing={3}>
+                <Stack spacing={2}>
                   {upcoming.map((booking) => (
-                    <BookingCardWithoutImage
+                    <MinimalBookingCard
                       key={booking.id}
                       {...booking}
-                      actionLabel="VISIT HOTEL"
+                      actionLabel="Visit Hotel"
                       onCancel={() => handleCancelClick(booking)}
                       isPast={false}
                       onViewHotel={handleViewHotel}
@@ -3192,36 +3489,90 @@ export default function ProfileComponent() {
         </Paper>
       </Box>
 
-      {/* =================== Cancel Confirmation Dialog =================== */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pr: 5, fontWeight: 600 }}>
+      {/* Cancel Dialog */}
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "grey.200",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            pr: 5,
+            fontWeight: 600,
+            fontSize: "1.25rem",
+            color: "#111827",
+          }}
+        >
           Cancel Booking
           <IconButton
-            aria-label="close"
             onClick={handleClose}
-            sx={{ position: "absolute", right: 8, top: 8 }}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              color: "#6b7280",
+              "&:hover": { color: "#374151" },
+            }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent dividers>
-          <DialogContentText sx={{ fontSize: "1rem" }}>
-            {`Are you sure you want to cancel "${target?.title}" (${target?.dateRange})? `}
-            This action cannot be undone and may be subject to cancellation
-            fees.
+        <DialogContent>
+          <DialogContentText
+            sx={{
+              fontSize: "1rem",
+              color: "#374151",
+              lineHeight: 1.6,
+            }}
+          >
+            Are you sure you want to cancel "{target?.title}" (
+            {target?.dateRange})? This action cannot be undone and may be
+            subject to cancellation fees.
           </DialogContentText>
         </DialogContent>
 
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleClose} variant="outlined">
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <Button
+            onClick={handleClose}
+            variant="outlined"
+            sx={{
+              borderColor: "#d1d5db",
+              color: "#6b7280",
+              borderRadius: 1.5,
+              textTransform: "none",
+              fontWeight: 600,
+              "&:hover": {
+                backgroundColor: alpha("#6b7280", 0.05),
+                borderColor: "#9ca3af",
+              },
+            }}
+          >
             Keep Booking
           </Button>
-          <Button color="error" variant="contained" onClick={handleConfirm}>
+          <Button
+            onClick={handleConfirm}
+            variant="contained"
+            sx={{
+              backgroundColor: "#dc2626",
+              borderRadius: 1.5,
+              textTransform: "none",
+              fontWeight: 600,
+              "&:hover": { backgroundColor: "#b91c1c" },
+            }}
+          >
             Yes, Cancel
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Container>
   );
 }

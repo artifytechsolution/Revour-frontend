@@ -436,6 +436,7 @@ import {
   faSpinner,
   faFilter,
   faSearch,
+  faTimes, // Add this import for close icon
 } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 import Autoplay from "embla-carousel-autoplay";
@@ -452,6 +453,11 @@ const BookingPage = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // ADD MOBILE BOOKING POPUP STATE
+  const [showMobileBookingPopup, setShowMobileBookingPopup] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
   // ADD PAYMENT STATES
   const [isBooking, setIsBooking] = useState(false);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
@@ -479,6 +485,18 @@ const BookingPage = () => {
     "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2";
 
   const { isError, isLoading, data, error, mutate } = useHourlyHotel();
+
+  // ADD MOBILE DETECTION FUNCTION
+  const checkIsMobile = useCallback(() => {
+    setIsMobile(window.innerWidth < 1024); // lg breakpoint in Tailwind
+  }, []);
+
+  // ADD RESIZE LISTENER FOR MOBILE DETECTION
+  useEffect(() => {
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, [checkIsMobile]);
 
   // ADD RAZORPAY SCRIPT LOADING
   useEffect(() => {
@@ -524,7 +542,6 @@ const BookingPage = () => {
   useEffect(() => {
     if (isError && !isLoading) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
-      // Don't redirect to login, just show error
       console.error("API Error:", error);
     }
 
@@ -536,7 +553,6 @@ const BookingPage = () => {
       setAllHotels(data.data);
       setHourlyHotelList(data.data);
     } else if (!isLoading && !isError) {
-      // API returned but no hotels data
       setAllHotels([]);
       setHourlyHotelList([]);
     }
@@ -558,12 +574,14 @@ const BookingPage = () => {
     setCurrentPage(1);
     setSelectedHotel(null);
     setSelectedSlot(null);
+    // Close mobile popup when filters change
+    setShowMobileBookingPopup(false);
   }, [filter, searchQuery]);
 
   // API call
   useEffect(() => {
     mutate({
-      limit: 50, // Increased limit to get more data
+      limit: 50,
     });
   }, [mutate]);
 
@@ -596,10 +614,15 @@ const BookingPage = () => {
     [isLoading, isLoadingMore, hasMore, loadMoreHotels]
   );
 
-  // Enhanced handlers
+  // MODIFIED HANDLER FOR MOBILE POPUP
   const handleSelect = (hotel, slot) => {
     setSelectedHotel(hotel);
     setSelectedSlot(slot);
+
+    // Open popup on mobile, normal flow on desktop
+    if (isMobile) {
+      setShowMobileBookingPopup(true);
+    }
   };
 
   const handleSearchChange = useCallback((e) => {
@@ -613,6 +636,7 @@ const BookingPage = () => {
   const clearSelection = useCallback(() => {
     setSelectedHotel(null);
     setSelectedSlot(null);
+    setShowMobileBookingPopup(false);
   }, []);
 
   // Get selected slot details for total calculation
@@ -636,6 +660,10 @@ const BookingPage = () => {
       return;
     }
 
+    // Close mobile popup before showing payment options
+    if (isMobile) {
+      setShowMobileBookingPopup(false);
+    }
     setShowPaymentOptions(true);
   };
 
@@ -644,89 +672,19 @@ const BookingPage = () => {
     setShowPaymentOptions(false);
 
     if (method === "cash") {
-      // Handle cash on counter booking
       await handleCashBooking();
     } else {
-      // Handle online payment
       await handleOnlinePayment();
     }
   };
 
-  // const handleCashBooking = async () => {
-  //   setIsBooking(true);
-
-  //   const bookingPayload = {
-  //     hotel_id: selectedHotel?.id,
-  //     check_in_datetime: searchDetails.checkIn,
-  //     check_out_datetime: searchDetails.checkIn,
-  //     days: 1,
-  //     item_id: selectedSlot,
-  //     total_amount: 1000,
-  //     user_id: userData.id,
-  //     payment_method: "COD",
-  //     booking_type: "HOTEL",
-  //     amount: selectedSlotDetails.rate_per_hour,
-  //     order_type: "HOURS",
-  //     currency: "INR",
-  //     tax_amount: 0,
-  //     // ADD GUEST COUNT TO PAYLOAD
-  //     guest_count: 2,
-  //   };
-
-  //   try {
-  //     const response = await fetch("http://localhost:8000/order", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(bookingPayload),
-  //     });
-  //     const order = await response.json();
-
-  //     if (order.error) throw new Error(order.error);
-
-  //     const options = {
-  //       key: order.data.key,
-  //       amount: order.data.amount,
-  //       currency: order.data.currency,
-  //       order_id: order.data.order_id,
-  //       name: selectedHotel?.name,
-  //       description: `Booking for HOURLY`,
-  //       handler: async function (response: any) {
-  //         const verify = await fetch("http://localhost:8000/order/verify", {
-  //           method: "POST",
-  //           headers: { "Content-Type": "application/json" },
-  //           body: JSON.stringify({ ...response, bill_id: order.data.bill_id }),
-  //         });
-  //         const result = await verify.json();
-  //         toast.success(result.message || "Payment Successful!");
-  //         router.push("/thankyou");
-  //       },
-  //       prefill: {
-  //         name: `${user.firstName} ${user.lastName}`,
-  //         email: `${user?.email}`,
-  //         contact: "892389389",
-  //       },
-  //       theme: { color: "#16A34A" }, // Changed from blue to green
-  //     };
-
-  //     const rzp = new (window as any).Razorpay(options);
-  //     rzp.on("payment.failed", (response: any) =>
-  //       toast.error("Payment failed: " + response.error.description)
-  //     );
-
-  //     rzp.open();
-  //   } catch (err) {
-  //     toast.error(err.message || "Failed to initiate payment.");
-  //   } finally {
-  //     setIsBooking(false);
-  //   }
-  // };
   const handleCashBooking = async () => {
     setIsBooking(true);
 
     const bookingPayload = {
       hotel_id: selectedHotel?.id,
       check_in_datetime: searchDetails.checkIn,
-      check_out_datetime: searchDetails.checkOut, // fixed: use checkOut instead of checkIn again
+      check_out_datetime: searchDetails.checkOut,
       days: 1,
       item_id: selectedSlot,
       total_amount: 1000,
@@ -755,7 +713,7 @@ const BookingPage = () => {
       if (order.error) throw new Error(order.error);
 
       toast.success(order.message || "Booking successful!");
-      router.push("/thankyou"); // redirect to thank you page
+      router.push("/thankyou");
     } catch (err) {
       toast.error(err.message || "Failed to create booking.");
     } finally {
@@ -779,7 +737,6 @@ const BookingPage = () => {
       order_type: "HOURS",
       currency: "INR",
       tax_amount: 0,
-      // ADD GUEST COUNT TO PAYLOAD
       guest_count: 2,
     };
 
@@ -824,7 +781,7 @@ const BookingPage = () => {
           email: `${user?.email}`,
           contact: "892389389",
         },
-        theme: { color: "#16A34A" }, // Changed from blue to green
+        theme: { color: "#16A34A" },
       };
 
       const rzp = new (window as any).Razorpay(options);
@@ -839,6 +796,7 @@ const BookingPage = () => {
       setIsBooking(false);
     }
   };
+
   console.log("hourly hotel list is hererer-----------!!!!!!!");
   console.log(hourlyHotelList);
   console.log(searchDetails);
@@ -909,6 +867,111 @@ const BookingPage = () => {
     </div>
   );
 
+  // ADD MOBILE BOOKING POPUP COMPONENT
+  const MobileBookingPopup = () => {
+    if (!showMobileBookingPopup || !isMobile) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 p-0">
+        <div className="bg-white rounded-t-3xl shadow-2xl w-full max-h-[80vh] overflow-y-auto animate-slide-up">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white">
+            <h3 className="text-xl font-bold text-gray-900">Your Booking</h3>
+            <button
+              onClick={() => setShowMobileBookingPopup(false)}
+              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition"
+            >
+              <FontAwesomeIcon icon={faTimes} className="text-gray-600" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">
+            {selectedHotel && selectedSlotDetails ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <span className="text-base font-medium text-gray-700">
+                    Hotel
+                  </span>
+                  <span className="text-base text-gray-900 font-semibold text-right max-w-[60%]">
+                    {selectedHotel.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <span className="text-base font-medium text-gray-700">
+                    Location
+                  </span>
+                  <span className="text-base text-gray-900 font-semibold">
+                    {selectedHotel.city}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <span className="text-base font-medium text-gray-700">
+                    Duration
+                  </span>
+                  <span className="text-base text-gray-900 font-semibold">
+                    {selectedSlotDetails.duration_hours} hours
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                  <span className="text-base font-medium text-gray-700">
+                    Rate
+                  </span>
+                  <span className="text-base text-green-600 font-bold">
+                    ₹{selectedSlotDetails.rate_per_hour}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pb-3">
+                  <span className="text-lg font-semibold text-gray-900">
+                    Total
+                  </span>
+                  <span className="text-xl text-green-600 font-bold">
+                    ₹{selectedSlotDetails.rate_per_hour}
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleConfirmBooking}
+                  disabled={isBooking}
+                  className="w-full mt-6 py-4 rounded-lg bg-green-600 text-white font-semibold text-lg hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isBooking ? (
+                    <div className="flex items-center justify-center">
+                      <FontAwesomeIcon
+                        icon={faSpinner}
+                        className="animate-spin mr-2"
+                      />
+                      Processing...
+                    </div>
+                  ) : (
+                    "Confirm Booking"
+                  )}
+                </button>
+
+                <button
+                  onClick={clearSelection}
+                  className="w-full py-3 text-gray-600 hover:text-gray-800 transition"
+                >
+                  Change Selection
+                </button>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">🏨</div>
+                <p className="text-gray-600 text-base font-medium mb-2">
+                  Select a hotel and time slot
+                </p>
+                <p className="text-gray-400 text-sm">
+                  Choose from our premium hourly workspaces to get started
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   console.log("hourly list data is herererereree---------");
   console.log(hourlyHotelList);
   console.log("rooms dataatatat----");
@@ -929,8 +992,6 @@ const BookingPage = () => {
             Book premium hourly workspaces across the city
           </p>
         </div>
-
-        {/* Search and Filters */}
 
         {/* Main Layout */}
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 lg:gap-8">
@@ -1041,7 +1102,7 @@ const BookingPage = () => {
                                       {slot.duration_hours}h
                                     </div>
                                     <div className="text-xs opacity-75">
-                                      ₹{slot.rate_per_hour}/hr
+                                      ₹{slot.rate_per_hour}
                                     </div>
                                   </div>
                                 </button>
@@ -1085,8 +1146,8 @@ const BookingPage = () => {
             )}
           </div>
 
-          {/* Enhanced Booking Sidebar with Total Calculation */}
-          <div className="lg:col-span-1">
+          {/* Enhanced Booking Sidebar - HIDDEN ON MOBILE */}
+          <div className="lg:col-span-1 hidden lg:block">
             <div className="bg-white rounded-xl shadow-xl p-6 sm:p-8 sticky top-6 border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -1145,7 +1206,6 @@ const BookingPage = () => {
                     </span>
                   </div>
 
-                  {/* UPDATED BUTTON WITH PAYMENT INTEGRATION */}
                   <button
                     onClick={handleConfirmBooking}
                     disabled={isBooking}
@@ -1187,7 +1247,10 @@ const BookingPage = () => {
         </div>
       </div>
 
-      {/* ADD PAYMENT OPTIONS MODAL */}
+      {/* ADD MOBILE BOOKING POPUP */}
+      <MobileBookingPopup />
+
+      {/* PAYMENT OPTIONS MODAL */}
       {showPaymentOptions && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
