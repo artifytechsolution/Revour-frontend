@@ -1667,80 +1667,84 @@ const HotelDetailsComponent = ({ params }) => {
 
         {/* Rooms Section */}
         <section className="py-6 border-b">
-          <h2 className="text-xl font-semibold mb-4">Available Rooms</h2>
+          {hotel.room_types && hotel.room_types.length > 0 && (
+            <h2 className="text-xl font-semibold mb-4">Available Rooms</h2>
+          )}
+
           <div className="space-y-6">
-            {hotel.room_types && hotel.room_types.length > 0 ? (
-              hotel.room_types.map((room) => (
-                <div
-                  key={room.id}
-                  className="border border-gray-200 rounded-lg hover:shadow-lg transition-shadow overflow-hidden flex flex-col sm:flex-row"
-                >
-                  <div className="w-full sm:w-1/3 flex-shrink-0">
-                    <img
-                      src={room.room_img || defaultImage}
-                      alt={room.type_name}
-                      className="w-full h-48 sm:h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4 flex flex-col flex-grow">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {room.type_name}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {room.description}
-                        </p>
+            {
+              hotel.room_types && hotel.room_types.length > 0
+                ? hotel.room_types.map((room) => (
+                    <div
+                      key={room.id}
+                      className="border border-gray-200 rounded-lg hover:shadow-lg transition-shadow overflow-hidden flex flex-col sm:flex-row"
+                    >
+                      <div className="w-full sm:w-1/3 flex-shrink-0">
+                        <img
+                          src={room.room_img || defaultImage}
+                          alt={room.type_name}
+                          className="w-full h-48 sm:h-full object-cover"
+                        />
                       </div>
-                      <div className="text-right shrink-0 ml-4">
-                        <p className="text-xl font-bold text-green-600">
-                          ₹{room.base_price}
-                          <span className="text-sm font-normal text-gray-500">
-                            /night
-                          </span>
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {room.taxes || "includes taxes & fees"}
-                        </p>
+                      <div className="p-4 flex flex-col flex-grow">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-semibold text-lg">
+                              {room.type_name}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {room.description}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0 ml-4">
+                            <p className="text-xl font-bold text-green-600">
+                              ₹{room.base_price}
+                              <span className="text-sm font-normal text-gray-500">
+                                /night
+                              </span>
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {room.taxes || "includes taxes & fees"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {[
+                            { icon: WifiIcon, text: "Free WiFi" },
+                            { icon: AcUnitIcon, text: "AC" },
+                            { icon: TvIcon, text: "TV" },
+                          ].map((feature, fIndex) => (
+                            <span
+                              key={fIndex}
+                              className="text-xs bg-gray-100 px-2 py-1 rounded-full flex items-center"
+                            >
+                              <feature.icon className="text-green-500 mr-1 text-sm" />{" "}
+                              {feature.text}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="mt-auto pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                          <button
+                            onClick={() => setIsGalleryOpen(true)}
+                            className="text-green-600 text-sm font-medium flex items-center hover:underline"
+                          >
+                            <ImageIcon className="mr-1 text-base" /> View Photos
+                          </button>
+                          <button
+                            onClick={() => router.push(`/order/${room.id}`)}
+                            className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          >
+                            Select Room
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {[
-                        { icon: WifiIcon, text: "Free WiFi" },
-                        { icon: AcUnitIcon, text: "AC" },
-                        { icon: TvIcon, text: "TV" },
-                      ].map((feature, fIndex) => (
-                        <span
-                          key={fIndex}
-                          className="text-xs bg-gray-100 px-2 py-1 rounded-full flex items-center"
-                        >
-                          <feature.icon className="text-green-500 mr-1 text-sm" />{" "}
-                          {feature.text}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="mt-auto pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                      <button
-                        onClick={() => setIsGalleryOpen(true)}
-                        className="text-green-600 text-sm font-medium flex items-center hover:underline"
-                      >
-                        <ImageIcon className="mr-1 text-base" /> View Photos
-                      </button>
-                      <button
-                        onClick={() => router.push(`/order/${room.id}`)}
-                        className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                      >
-                        Select Room
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-6">
-                No rooms available
-              </p>
-            )}
+                  ))
+                : ""
+              // <p className="text-gray-500 text-center py-6">
+              //   No rooms available
+              // </p>
+            }
           </div>
         </section>
 

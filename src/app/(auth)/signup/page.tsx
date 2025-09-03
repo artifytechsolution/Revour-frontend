@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -15,26 +15,58 @@ import { useUserSignup } from "@src/hooks/apiHooks";
 import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
 import PersonIcon from "@mui/icons-material/Person";
+import PhoneIcon from "@mui/icons-material/Phone";
 
 interface SignupFormData {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
+  phone: string;
+  role: string;
 }
 
+// Country codes data
+const countryCodes = [
+  { code: "+1", country: "US", flag: "🇺🇸" },
+  { code: "+44", country: "UK", flag: "🇬🇧" },
+  { code: "+91", country: "IN", flag: "🇮🇳" },
+  { code: "+86", country: "CN", flag: "🇨🇳" },
+  { code: "+81", country: "JP", flag: "🇯🇵" },
+  { code: "+49", country: "DE", flag: "🇩🇪" },
+  { code: "+33", country: "FR", flag: "🇫🇷" },
+  { code: "+61", country: "AU", flag: "🇦🇺" },
+  { code: "+55", country: "BR", flag: "🇧🇷" },
+  { code: "+7", country: "RU", flag: "🇷🇺" },
+  { code: "+82", country: "KR", flag: "🇰🇷" },
+  { code: "+39", country: "IT", flag: "🇮🇹" },
+  { code: "+34", country: "ES", flag: "🇪🇸" },
+  { code: "+31", country: "NL", flag: "🇳🇱" },
+  { code: "+46", country: "SE", flag: "🇸🇪" },
+  { code: "+41", country: "CH", flag: "🇨🇭" },
+  { code: "+65", country: "SG", flag: "🇸🇬" },
+  { code: "+852", country: "HK", flag: "🇭🇰" },
+  { code: "+971", country: "AE", flag: "🇦🇪" },
+  { code: "+966", country: "SA", flag: "🇸🇦" },
+];
+
 const SignupComponent = () => {
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const method = useForm<SignupFormData>({
     defaultValues: {
       firstName: "",
       lastName: "",
       email: "",
       password: "",
+      phone: "",
     },
   });
   const {
     handleSubmit,
     reset,
+    register,
     formState: { errors },
   } = method;
   const dispatch = useDispatch();
@@ -68,11 +100,22 @@ const SignupComponent = () => {
   ]);
 
   const onSubmit = (data: SignupFormData) => {
+    const fullPhoneNumber = selectedCountryCode + data.phone;
     signup({
       ...data,
+      phone: fullPhoneNumber,
       role: "CUSTOMER",
     });
   };
+
+  const handleCountrySelect = (countryCode: string) => {
+    setSelectedCountryCode(countryCode);
+    setIsDropdownOpen(false);
+  };
+
+  const selectedCountry = countryCodes.find(
+    (country) => country.code === selectedCountryCode
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-gray-50 px-4 py-12 sm:px-6 lg:px-8">
@@ -246,6 +289,98 @@ const SignupComponent = () => {
                       />
                     </svg>
                     {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Phone Field */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <div className="relative flex">
+                  {/* Country Code Dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center px-3 py-3 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
+                    >
+                      <span className="mr-1">{selectedCountry?.flag}</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        {selectedCountryCode}
+                      </span>
+                      <svg
+                        className={`ml-1 w-4 h-4 text-gray-500 transition-transform ${
+                          isDropdownOpen ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                        {countryCodes.map((country) => (
+                          <button
+                            key={country.code}
+                            type="button"
+                            onClick={() => handleCountrySelect(country.code)}
+                            className="w-full flex items-center px-3 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors duration-150"
+                          >
+                            <span className="mr-3">{country.flag}</span>
+                            <span className="text-sm text-gray-700 mr-2">
+                              {country.country}
+                            </span>
+                            <span className="text-sm text-gray-500 ml-auto">
+                              {country.code}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Phone Input */}
+                  <div className="flex-1">
+                    <input
+                      {...register("phone", {
+                        required: "Phone number is required",
+                        pattern: {
+                          value: /^[0-9]{7,15}$/,
+                          message:
+                            "Please enter a valid phone number (7-15 digits)",
+                        },
+                      })}
+                      type="tel"
+                      placeholder="1234567890"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                    />
+                  </div>
+                </div>
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-1 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    {errors.phone.message}
                   </p>
                 )}
               </div>

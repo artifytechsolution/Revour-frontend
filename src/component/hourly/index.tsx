@@ -1048,31 +1048,36 @@ const BookingPage = () => {
                         <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                           {/* Hotel Info */}
                           <div className="space-y-3">
-                            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
-                              {hotel.name}
-                            </h2>
+                            <Link href={`/hoteldetails/${hotel.id}`}>
+                              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight hover:text-green-600 transition-colors duration-200 cursor-pointer">
+                                {hotel.name}
+                              </h2>
+                            </Link>
                             <div className="space-y-2 text-gray-600">
-                              <p className="flex items-center text-sm sm:text-base">
-                                <FontAwesomeIcon
-                                  icon={faMapMarkerAlt}
-                                  className="text-green-500 mr-2.5 w-4"
-                                />
-                                {hotel.city}, {hotel.country}
-                              </p>
-                              <p className="flex items-center text-sm sm:text-base">
-                                <FontAwesomeIcon
-                                  icon={faPhone}
-                                  className="text-green-500 mr-2.5 w-4"
-                                />
-                                {hotel.phone}
-                              </p>
-                              <p className="flex items-center text-sm sm:text-base">
-                                <FontAwesomeIcon
-                                  icon={faEnvelope}
-                                  className="text-green-500 mr-2.5 w-4"
-                                />
-                                {hotel.email}
-                              </p>
+                              <Link href={`/hoteldetails/${hotel.id}`}>
+                                <p className="flex items-center text-sm sm:text-base">
+                                  <FontAwesomeIcon
+                                    icon={faMapMarkerAlt}
+                                    className="text-green-500 mr-2.5 w-4"
+                                  />
+                                  {hotel.city}, {hotel.country}
+                                </p>
+
+                                <p className="flex items-center text-sm sm:text-base">
+                                  <FontAwesomeIcon
+                                    icon={faPhone}
+                                    className="text-green-500 mr-2.5 w-4"
+                                  />
+                                  {hotel.phone}
+                                </p>
+                                <p className="flex items-center text-sm sm:text-base">
+                                  <FontAwesomeIcon
+                                    icon={faEnvelope}
+                                    className="text-green-500 mr-2.5 w-4"
+                                  />
+                                  {hotel.email}
+                                </p>
+                              </Link>
                             </div>
                           </div>
                         </div>

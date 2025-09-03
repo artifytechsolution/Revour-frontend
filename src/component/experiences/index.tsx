@@ -1676,6 +1676,13 @@ const ExperiencesComponent: React.FC = () => {
                     Duration: {selectedExperience.hours} hours • Location:{" "}
                     {selectedExperience.address}
                   </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    color="text.secondary"
+                  >
+                    Phone : 7990216477
+                  </Typography>
                 </Box>
 
                 {/* Date Picker */}

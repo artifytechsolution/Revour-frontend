@@ -3337,7 +3337,7 @@ export default function ProfileComponent() {
                         fontWeight: 500,
                       }}
                     >
-                      {profile.bio} • {profile.joinDate}
+                      {user.email} • {user.phone || "not avilable"}
                     </Typography>
                   </>
                 )}

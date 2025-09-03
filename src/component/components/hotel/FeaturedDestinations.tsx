@@ -364,9 +364,11 @@ function FeaturedDestinations() {
                       </Link>
 
                       <div className="p-4">
-                        <h4 className="text-md md:text-lg font-semibold text-gray-800">
-                          {hotel?.name}
-                        </h4>
+                        <Link href={linkPath}>
+                          <h4 className="text-md md:text-lg font-semibold text-gray-800">
+                            {hotel?.name}
+                          </h4>
+                        </Link>
                         <div className="flex justify-between items-center text-sm text-gray-600 mt-2">
                           <Rating
                             name="read-only"

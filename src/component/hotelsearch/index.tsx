@@ -470,7 +470,7 @@ const HotelSearchComponent = () => {
         {/* Banner Carousel - One banner at a time with auto-advance */}
         <div className="w-full mb-12">
           <Carousel
-            className="w-full max-w-6xl mx-auto"
+            className="w-full max-w-7xl mx-auto px-2 md:px-4"
             opts={{ loop: true, align: "center" }}
             setApi={setCarouselAPI}
           >
@@ -478,23 +478,36 @@ const HotelSearchComponent = () => {
               {banners.map((banner, i) => (
                 <CarouselItem key={i} className="w-full">
                   <Card className="overflow-hidden rounded-2xl shadow-md">
-                    <div className="relative w-full h-64 md:h-96">
+                    {/* Image + Text Overlay */}
+                    <div
+                      className="
+              relative w-full 
+              aspect-[16/9] sm:aspect-[21/9] 
+              max-h-[500px]
+            "
+                    >
                       <img
                         src={banner.img}
                         alt={banner.title}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
+                      {/* Text Overlay */}
                     </div>
-                    <CardContent></CardContent>
                   </Card>
                 </CarouselItem>
               ))}
             </CarouselContent>
+
+            {/* Navigation Buttons */}
             <CarouselPrevious
-              className="left-2"
+              className="left-2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md"
               onClick={handleUserInteraction}
             />
-            <CarouselNext className="right-2" onClick={handleUserInteraction} />
+            <CarouselNext
+              className="right-2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md"
+              onClick={handleUserInteraction}
+            />
           </Carousel>
         </div>
 
