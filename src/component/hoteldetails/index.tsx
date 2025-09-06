@@ -2799,21 +2799,7 @@ const HotelDetailsComponent = ({ params }) => {
                         </p>
                       </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {[
-                        { icon: WifiIcon, text: "Free WiFi" },
-                        { icon: AcUnitIcon, text: "AC" },
-                        { icon: TvIcon, text: "TV" },
-                      ].map((feature, fIndex) => (
-                        <span
-                          key={fIndex}
-                          className="text-xs bg-gray-100 px-2 py-1 rounded-full flex items-center"
-                        >
-                          <feature.icon className="text-green-500 mr-1 text-sm" />{" "}
-                          {feature.text}
-                        </span>
-                      ))}
-                    </div>
+
                     <div className="mt-auto pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                       <button
                         onClick={() => setIsGalleryOpen(true)}
