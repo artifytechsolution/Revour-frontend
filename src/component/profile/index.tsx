@@ -2325,7 +2325,7 @@ const transformOrderToBooking = (order: OrderData): Booking => {
   return {
     id: order.order_id?.toString() || order.id,
     orderId: order.id,
-    status: reservation?.status,
+
     reservation_id: reservation?.reservation_id,
     dateRange: formatDateRange(
       reservation?.check_in_datetime,
@@ -2540,26 +2540,6 @@ function MinimalBookingCard({
               alignItems="center"
               sx={{ mb: 0.5 }}
             >
-              <Box
-                sx={{
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: 1,
-                  backgroundColor: statusColors.bg,
-                  border: `1px solid ${statusColors.border}`,
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: statusColors.color,
-                    fontWeight: 600,
-                    fontSize: "0.75rem",
-                  }}
-                >
-                  {status}
-                </Typography>
-              </Box>
               {(isTodayBooking || isWithin24HoursBooking) && (
                 <Box
                   sx={{
@@ -3073,7 +3053,7 @@ export default function ProfileComponent() {
   };
 
   const handleViewHotel = () => {
-    router.push("/");
+    router.push("/home");
   };
 
   useEffect(() => {
@@ -3403,7 +3383,7 @@ export default function ProfileComponent() {
                     <MinimalBookingCard
                       key={booking.id}
                       {...booking}
-                      actionLabel="Visit Hotels"
+                      actionLabel="Visit more Hotels"
                       isPast={true}
                       onViewHotel={handleViewHotel}
                     />
@@ -3463,7 +3443,7 @@ export default function ProfileComponent() {
                     <MinimalBookingCard
                       key={booking.id}
                       {...booking}
-                      actionLabel="Visit Hotel"
+                      actionLabel="Visit More Hotels"
                       onCancel={() => handleCancelClick(booking)}
                       isPast={false}
                       onViewHotel={handleViewHotel}

@@ -436,14 +436,13 @@ import {
   faSpinner,
   faFilter,
   faSearch,
-  faTimes, // Add this import for close icon
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 import Autoplay from "embla-carousel-autoplay";
 import { useHourlyHotel } from "@src/hooks/apiHooks";
 import toast from "react-hot-toast";
 import Link from "next/link";
-// ADD THESE IMPORTS FOR PAYMENT
 import { useAppSelector } from "@src/redux/store";
 import { selectSearchDetails, selectUser } from "@src/redux/reducers/authSlice";
 
@@ -463,6 +462,16 @@ const BookingPage = () => {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("online");
 
+  // Check-in date and time states
+  const [checkInDate, setCheckInDate] = useState("");
+  const [checkInTime, setCheckInTime] = useState("");
+
+  // Get today's date in YYYY-MM-DD format for min date
+  const todayDate = useMemo(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  }, []);
+
   // Pagination and infinite scroll states
   const [allHotels, setAllHotels] = useState([]);
   const [displayedHotels, setDisplayedHotels] = useState([]);
@@ -477,8 +486,6 @@ const BookingPage = () => {
   const ITEMS_PER_PAGE = 6;
   const searchDetails = useAppSelector(selectSearchDetails);
   const userData = useAppSelector(selectUser);
-
-  // ADD USER SELECTOR
   const user = useAppSelector(selectUser);
 
   const defaultImage =
@@ -486,9 +493,52 @@ const BookingPage = () => {
 
   const { isError, isLoading, data, error, mutate } = useHourlyHotel();
 
+  // FIXED: Get selected slot details FIRST (before isBookingReady)
+  const selectedSlotDetails = useMemo(() => {
+    if (!selectedHotel || !selectedSlot) return null;
+    return selectedHotel.room_hourly_rates?.find(
+      (slot) => slot.id === selectedSlot
+    );
+  }, [selectedHotel, selectedSlot]);
+
+  // FIXED: Check if booking is ready - NOW AFTER selectedSlotDetails
+  const isBookingReady = useMemo(() => {
+    return !!(
+      selectedHotel &&
+      selectedSlotDetails &&
+      checkInDate &&
+      checkInTime &&
+      checkInDate >= todayDate
+    );
+  }, [selectedHotel, selectedSlotDetails, checkInDate, checkInTime, todayDate]);
+
+  // Initialize with searchDetails if available
+  useEffect(() => {
+    if (searchDetails?.checkIn) {
+      try {
+        const date = new Date(searchDetails.checkIn);
+        if (!isNaN(date.getTime())) {
+          const dateStr = date.toISOString().split("T")[0];
+          // Only set if it's not a past date
+          if (dateStr >= todayDate) {
+            setCheckInDate(dateStr);
+          }
+        }
+      } catch (e) {
+        console.log("Invalid check-in date from searchDetails");
+      }
+    }
+    if (
+      searchDetails?.checkInTime &&
+      typeof searchDetails.checkInTime === "string"
+    ) {
+      setCheckInTime(searchDetails.checkInTime);
+    }
+  }, [searchDetails, todayDate]);
+
   // ADD MOBILE DETECTION FUNCTION
   const checkIsMobile = useCallback(() => {
-    setIsMobile(window.innerWidth < 1024); // lg breakpoint in Tailwind
+    setIsMobile(window.innerWidth < 1024);
   }, []);
 
   // ADD RESIZE LISTENER FOR MOBILE DETECTION
@@ -538,7 +588,7 @@ const BookingPage = () => {
     return filtered;
   }, [allHotels, filter, searchQuery]);
 
-  // API data handling - NO static data fallback
+  // API data handling
   useEffect(() => {
     if (isError && !isLoading) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
@@ -574,7 +624,6 @@ const BookingPage = () => {
     setCurrentPage(1);
     setSelectedHotel(null);
     setSelectedSlot(null);
-    // Close mobile popup when filters change
     setShowMobileBookingPopup(false);
   }, [filter, searchQuery]);
 
@@ -639,18 +688,46 @@ const BookingPage = () => {
     setShowMobileBookingPopup(false);
   }, []);
 
-  // Get selected slot details for total calculation
-  const selectedSlotDetails = useMemo(() => {
-    if (!selectedHotel || !selectedSlot) return null;
-    return selectedHotel.room_hourly_rates?.find(
-      (slot) => slot.id === selectedSlot
-    );
-  }, [selectedHotel, selectedSlot]);
+  // Helper function to combine date and time into a Date object
+  const createCheckInDateTime = useCallback(() => {
+    if (!checkInDate || !checkInTime) return null;
 
-  // ADD PAYMENT HANDLERS
+    try {
+      const [hours, minutes] = checkInTime.split(":").map(Number);
+      const date = new Date(checkInDate);
+      date.setHours(hours, minutes, 0, 0);
+      return date;
+    } catch (e) {
+      return null;
+    }
+  }, [checkInDate, checkInTime]);
+
+  // Enhanced validation with better error messages
   const handleConfirmBooking = () => {
     if (!selectedHotel || !selectedSlotDetails) {
       toast.error("Please select a hotel and time slot");
+      return;
+    }
+
+    // Enhanced validation
+    if (!checkInDate) {
+      toast.error("Please select a check-in date");
+      return;
+    }
+
+    if (!checkInTime) {
+      toast.error("Please select a check-in time");
+      return;
+    }
+
+    if (checkInDate < todayDate) {
+      toast.error("Check-in date cannot be in the past");
+      return;
+    }
+
+    const checkInDateTime = createCheckInDateTime();
+    if (!checkInDateTime) {
+      toast.error("Invalid check-in date or time");
       return;
     }
 
@@ -678,14 +755,17 @@ const BookingPage = () => {
     }
   };
 
+  // Use selected date and time for cash booking
   const handleCashBooking = async () => {
     setIsBooking(true);
 
+    const checkInDateTime = createCheckInDateTime();
+
     const bookingPayload = {
       hotel_id: selectedHotel?.id,
-      check_in_datetime: new Date(searchDetails.checkIn),
-      check_out_datetime: new Date(searchDetails.checkOut),
-      chck_in_hours: searchDetails.checkInTime,
+      check_in_datetime: checkInDateTime,
+      check_out_datetime: new Date(searchDetails?.checkOut || checkInDateTime),
+      chck_in_hours: checkInTime,
       days: 1,
       item_id: selectedSlot,
       total_amount: selectedSlotDetails.rate_per_hour,
@@ -722,13 +802,17 @@ const BookingPage = () => {
     }
   };
 
+  // Use selected date and time for online payment
   const handleOnlinePayment = async () => {
     setIsBooking(true);
 
+    const checkInDateTime = createCheckInDateTime();
+
     const bookingPayload = {
       hotel_id: selectedHotel?.id,
-      check_in_datetime: new Date(searchDetails.checkIn),
-      check_out_datetime: new Date(searchDetails.checkOut),
+      check_in_datetime: checkInDateTime,
+      check_out_datetime: new Date(searchDetails?.checkOut || checkInDateTime),
+      chck_in_hours: checkInTime,
       days: 1,
       item_id: selectedSlot,
       total_amount: selectedSlotDetails.rate_per_hour,
@@ -799,14 +883,6 @@ const BookingPage = () => {
     }
   };
 
-  console.log("hourly hotel list is hererer-----------!!!!!!!");
-  console.log(hourlyHotelList);
-  console.log(searchDetails);
-  console.log(selectedSlot);
-  console.log(user);
-  console.log("selected hotel is hererer--------------");
-  console.log(selectedHotel);
-
   // Loading Skeleton Component
   const LoadingSkeleton = () => (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse">
@@ -871,7 +947,7 @@ const BookingPage = () => {
     </div>
   );
 
-  // ADD MOBILE BOOKING POPUP COMPONENT
+  // Mobile popup with disabled previous dates and disabled confirm button
   const MobileBookingPopup = () => {
     if (!showMobileBookingPopup || !isMobile) return null;
 
@@ -893,6 +969,46 @@ const BookingPage = () => {
           <div className="p-6">
             {selectedHotel && selectedSlotDetails ? (
               <div className="space-y-4">
+                {/* Check-in Date and Time Inputs with disabled previous dates */}
+                <div className="border-b border-gray-200 pb-4 mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    Check-in Details
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={checkInDate}
+                        onChange={(e) => setCheckInDate(e.target.value)}
+                        min={todayDate}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Time <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="time"
+                        value={checkInTime}
+                        onChange={(e) => setCheckInTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  {/* Helper text */}
+                  {(!checkInDate || !checkInTime) && (
+                    <p className="text-sm text-red-500 mt-2">
+                      Please select both date and time to continue
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                   <span className="text-base font-medium text-gray-700">
                     Hotel
@@ -934,10 +1050,15 @@ const BookingPage = () => {
                   </span>
                 </div>
 
+                {/* Disabled confirm button when not ready */}
                 <button
                   onClick={handleConfirmBooking}
-                  disabled={isBooking}
-                  className="w-full mt-6 py-4 rounded-lg bg-green-600 text-white font-semibold text-lg hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isBooking || !isBookingReady}
+                  className={`w-full mt-6 py-4 rounded-lg font-semibold text-lg transition-all duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                    isBookingReady && !isBooking
+                      ? "bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
                 >
                   {isBooking ? (
                     <div className="flex items-center justify-center">
@@ -947,6 +1068,8 @@ const BookingPage = () => {
                       />
                       Processing...
                     </div>
+                  ) : !isBookingReady ? (
+                    "Select Date & Time to Continue"
                   ) : (
                     "Confirm Booking"
                   )}
@@ -975,13 +1098,6 @@ const BookingPage = () => {
       </div>
     );
   };
-
-  console.log("hourly list data is herererereree---------");
-  console.log(hourlyHotelList);
-  console.log("rooms dataatatat----");
-  console.log(filteredHotels);
-  console.log("selected hotel data is herererer----");
-  console.log(selectedHotel);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1155,7 +1271,7 @@ const BookingPage = () => {
             )}
           </div>
 
-          {/* Enhanced Booking Sidebar - HIDDEN ON MOBILE */}
+          {/* Desktop sidebar with disabled previous dates and disabled confirm button */}
           <div className="lg:col-span-1 hidden lg:block">
             <div className="bg-white rounded-xl shadow-xl p-6 sm:p-8 sticky top-6 border border-gray-100">
               <div className="flex items-center justify-between mb-6">
@@ -1174,6 +1290,46 @@ const BookingPage = () => {
 
               {selectedHotel && selectedSlotDetails ? (
                 <div className="space-y-4">
+                  {/* Check-in Date and Time Inputs with disabled previous dates */}
+                  <div className="border-b border-gray-200 pb-4 mb-4">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                      Check-in Details
+                    </h4>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Date <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={checkInDate}
+                          onChange={(e) => setCheckInDate(e.target.value)}
+                          min={todayDate}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Time <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="time"
+                          value={checkInTime}
+                          onChange={(e) => setCheckInTime(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          required
+                        />
+                      </div>
+                    </div>
+                    {/* Helper text */}
+                    {(!checkInDate || !checkInTime) && (
+                      <p className="text-sm text-red-500 mt-2">
+                        Please select both date and time to continue
+                      </p>
+                    )}
+                  </div>
+
                   <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                     <span className="text-sm sm:text-base font-medium text-gray-700">
                       Hotel
@@ -1215,10 +1371,15 @@ const BookingPage = () => {
                     </span>
                   </div>
 
+                  {/* Disabled confirm button when not ready */}
                   <button
                     onClick={handleConfirmBooking}
-                    disabled={isBooking}
-                    className="w-full mt-6 py-3 rounded-lg bg-green-600 text-white font-semibold text-sm sm:text-base hover:bg-green-700 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isBooking || !isBookingReady}
+                    className={`w-full mt-6 py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                      isBookingReady && !isBooking
+                        ? "bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
                   >
                     {isBooking ? (
                       <div className="flex items-center justify-center">
@@ -1228,6 +1389,8 @@ const BookingPage = () => {
                         />
                         Processing...
                       </div>
+                    ) : !isBookingReady ? (
+                      "Select Date & Time to Continue"
                     ) : (
                       "Confirm Booking"
                     )}
@@ -1256,10 +1419,10 @@ const BookingPage = () => {
         </div>
       </div>
 
-      {/* ADD MOBILE BOOKING POPUP */}
+      {/* Mobile Booking Popup */}
       <MobileBookingPopup />
 
-      {/* PAYMENT OPTIONS MODAL */}
+      {/* Payment Options Modal */}
       {showPaymentOptions && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
