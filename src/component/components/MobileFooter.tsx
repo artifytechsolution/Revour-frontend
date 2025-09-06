@@ -55,7 +55,7 @@ const MobileFooter = () => {
   const isLogin = useSelector(selectIsLogin);
 
   const navigationItems = [
-    { id: "home", label: "Home", icon: HomeIcon, href: "/", color: "blue" },
+    { id: "home", label: "Home", icon: HomeIcon, href: "/home", color: "blue" },
     {
       id: "experiences",
       label: "Experiences",
@@ -277,7 +277,7 @@ const MobileFooterSimple = () => {
   const pathname = usePathname();
 
   const navigationItems = [
-    { id: "home", label: "Home", icon: HomeIcon, href: "/" },
+    { id: "home", label: "Home", icon: HomeIcon, href: "/home" },
     { id: "explore", label: "Explore", icon: MapIcon, href: "/experiences" },
     {
       id: "bookings",
