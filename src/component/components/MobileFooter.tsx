@@ -4,29 +4,58 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   HomeIcon,
   MapIcon,
-  BellIcon,
   UserIcon,
   SparklesIcon,
   PhoneIcon,
-  HeartIcon,
   BookmarkIcon,
   ClockIcon,
 } from "lucide-react";
+import { useSelector } from "react-redux";
+import { selectIsLogin } from "@src/redux/reducers/authSlice";
 
+// Safe Tailwind color mappings
+const colorMap = {
+  blue: {
+    bg: "bg-blue-50",
+    text: "text-blue-600",
+    dot: "bg-blue-600",
+    ripple: "bg-blue-200",
+    textActive: "text-blue-700",
+  },
+  purple: {
+    bg: "bg-purple-50",
+    text: "text-purple-600",
+    dot: "bg-purple-600",
+    ripple: "bg-purple-200",
+    textActive: "text-purple-700",
+  },
+  green: {
+    bg: "bg-green-50",
+    text: "text-green-600",
+    dot: "bg-green-600",
+    ripple: "bg-green-200",
+    textActive: "text-green-700",
+  },
+  orange: {
+    bg: "bg-orange-50",
+    text: "text-orange-600",
+    dot: "bg-orange-600",
+    ripple: "bg-orange-200",
+    textActive: "text-orange-700",
+  },
+};
+
+/* -------------------------------
+   Main Mobile Footer
+-------------------------------- */
 const MobileFooter = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("home");
+  const isLogin = useSelector(selectIsLogin);
 
-  // Navigation items configuration
   const navigationItems = [
-    {
-      id: "home",
-      label: "Home",
-      icon: HomeIcon,
-      href: "/",
-      color: "blue",
-    },
+    { id: "home", label: "Home", icon: HomeIcon, href: "/", color: "blue" },
     {
       id: "experiences",
       label: "Experiences",
@@ -41,105 +70,70 @@ const MobileFooter = () => {
       href: "/hourly",
       color: "green",
     },
-    {
+    isLogin && {
       id: "profile",
       label: "Profile",
       icon: UserIcon,
       href: "/profile",
       color: "orange",
     },
-  ];
+  ].filter(Boolean); // ✅ prevent false item
 
   const handleNavigation = (item) => {
     setActiveTab(item.id);
     router.push(item.href);
   };
 
-  const isActive = (itemHref) => {
-    return pathname === itemHref;
-  };
+  const isActive = (itemHref) => pathname === itemHref;
 
   return (
     <>
-      {/* Spacer to prevent content from being hidden behind footer */}
       <div className="h-20 lg:hidden"></div>
 
-      {/* Mobile Footer */}
       <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50">
-        {/* Background blur effect */}
         <div className="absolute inset-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl"></div>
 
-        {/* Content */}
         <div className="relative max-w-[600px] mx-auto">
           <div className="px-2 py-2 flex justify-around items-center">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
+              const color = colorMap[item.color];
 
               return (
                 <button
                   key={item.id}
                   onClick={() => handleNavigation(item)}
-                  className={`
-                    flex flex-col items-center justify-center p-2 rounded-xl
-                    transition-all duration-300 ease-in-out transform
-                    hover:scale-105 active:scale-95
-                    min-w-[70px] h-16
-                    ${
-                      active
-                        ? `bg-${item.color}-50 shadow-lg`
-                        : "hover:bg-gray-50"
-                    }
-                  `}
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 min-w-[70px] h-16 ${
+                    active ? `${color.bg} shadow-lg` : "hover:bg-gray-50"
+                  }`}
                 >
-                  {/* Icon container with animation */}
                   <div className="relative mb-1">
                     <Icon
-                      className={`
-                        h-6 w-6 transition-all duration-300
-                        ${
-                          active
-                            ? `text-${item.color}-600 scale-110`
-                            : "text-gray-500 hover:text-gray-700"
-                        }
-                      `}
+                      className={`h-6 w-6 transition-all duration-300 ${
+                        active ? `${color.text} scale-110` : "text-gray-500"
+                      }`}
                     />
 
-                    {/* Active indicator dot */}
                     {active && (
                       <div
-                        className={`
-                        absolute -top-1 -right-1 w-2 h-2 
-                        bg-${item.color}-600 rounded-full
-                        animate-pulse
-                      `}
-                      ></div>
+                        className={`absolute -top-1 -right-1 w-2 h-2 ${color.dot} rounded-full animate-pulse`}
+                      />
                     )}
 
-                    {/* Ripple effect on tap */}
-                    <div
-                      className={`
-                      absolute inset-0 rounded-full
-                      transition-all duration-300 scale-0
-                      ${
-                        active
-                          ? `bg-${item.color}-200 scale-150 opacity-30`
-                          : ""
-                      }
-                    `}
-                    ></div>
+                    {active && (
+                      <div
+                        className={`absolute inset-0 rounded-full ${color.ripple} scale-150 opacity-30 transition-all duration-300`}
+                      />
+                    )}
                   </div>
 
-                  {/* Label */}
                   <span
-                    className={`
-                    text-xs font-medium transition-all duration-300
-                    ${
+                    className={`text-xs font-medium transition-all duration-300 ${
                       active
-                        ? `text-${item.color}-700 font-semibold`
+                        ? `${color.textActive} font-semibold`
                         : "text-gray-600"
-                    }
-                  `}
+                    }`}
                   >
                     {item.label}
                   </span>
@@ -147,8 +141,6 @@ const MobileFooter = () => {
               );
             })}
           </div>
-
-          {/* Safe area padding for devices with home indicators */}
           <div className="h-safe-bottom"></div>
         </div>
       </div>
@@ -156,7 +148,9 @@ const MobileFooter = () => {
   );
 };
 
-// Alternative version with more visual emphasis
+/* -------------------------------
+   Enhanced Version
+-------------------------------- */
 const MobileFooterEnhanced = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -204,19 +198,14 @@ const MobileFooterEnhanced = () => {
     },
   ];
 
-  const isActive = (itemHref) => pathname === itemHref;
+  const isActive = (href) => pathname === href;
 
   return (
     <>
-      {/* Content spacer */}
       <div className="h-24 lg:hidden"></div>
 
-      {/* Enhanced Mobile Footer */}
       <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50">
-        {/* Glassmorphism background */}
         <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-gray-200/50 shadow-2xl"></div>
-
-        {/* Gradient top border */}
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 via-green-500 to-orange-500"></div>
 
         <div className="relative max-w-[600px] mx-auto px-4 py-3">
@@ -229,89 +218,50 @@ const MobileFooterEnhanced = () => {
                 <button
                   key={item.id}
                   onClick={() => router.push(item.href)}
-                  className={`
-                    relative flex flex-col items-center justify-center
-                    p-3 rounded-2xl min-w-[75px] h-16
-                    transition-all duration-300 ease-out transform
-                    hover:scale-105 active:scale-95
-                    ${
-                      active
-                        ? `${item.bgColor} ${
-                            item.borderColor
-                          } border-2 shadow-lg shadow-${
-                            item.textColor.split("-")[1]
-                          }-200/50`
-                        : "hover:bg-gray-50 border-2 border-transparent"
-                    }
-                  `}
+                  className={`relative flex flex-col items-center justify-center p-3 rounded-2xl min-w-[75px] h-16 transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 ${
+                    active
+                      ? `${item.bgColor} ${item.borderColor} border-2 shadow-lg`
+                      : "hover:bg-gray-50 border-2 border-transparent"
+                  }`}
                 >
-                  {/* Background glow effect for active state */}
                   {active && (
                     <div
-                      className={`
-                      absolute inset-0 rounded-2xl opacity-20
-                      bg-gradient-to-br ${item.gradient}
-                      animate-pulse
-                    `}
-                    ></div>
+                      className={`absolute inset-0 rounded-2xl opacity-20 bg-gradient-to-br ${item.gradient} animate-pulse`}
+                    />
                   )}
 
-                  {/* Icon */}
                   <div className="relative z-10 mb-1">
                     <Icon
-                      className={`
-                        h-6 w-6 transition-all duration-300
-                        ${
-                          active
-                            ? `${item.textColor} drop-shadow-sm`
-                            : "text-gray-500"
-                        }
-                      `}
+                      className={`h-6 w-6 transition-all duration-300 ${
+                        active ? `${item.textColor}` : "text-gray-500"
+                      }`}
                     />
-
-                    {/* Success indicator */}
                     {active && (
                       <div
-                        className={`
-                        absolute -top-1 -right-1 w-2 h-2 rounded-full
-                        bg-gradient-to-br ${item.gradient}
-                        animate-bounce
-                      `}
-                      ></div>
+                        className={`absolute -top-1 -right-1 w-2 h-2 rounded-full bg-gradient-to-br ${item.gradient} animate-bounce`}
+                      />
                     )}
                   </div>
 
-                  {/* Label */}
                   <span
-                    className={`
-                    relative z-10 text-xs font-medium transition-all duration-300
-                    ${
+                    className={`relative z-10 text-xs font-medium transition-all duration-300 ${
                       active
                         ? `${item.textColor} font-semibold`
                         : "text-gray-600"
-                    }
-                  `}
+                    }`}
                   >
                     {item.label}
                   </span>
 
-                  {/* Active indicator line */}
                   {active && (
                     <div
-                      className={`
-                      absolute bottom-0 left-1/2 transform -translate-x-1/2
-                      w-8 h-1 rounded-full
-                      bg-gradient-to-r ${item.gradient}
-                      animate-pulse
-                    `}
-                    ></div>
+                      className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 rounded-full bg-gradient-to-r ${item.gradient} animate-pulse`}
+                    />
                   )}
                 </button>
               );
             })}
           </div>
-
-          {/* iPhone safe area bottom padding */}
           <div className="pb-safe-bottom"></div>
         </div>
       </div>
@@ -319,7 +269,9 @@ const MobileFooterEnhanced = () => {
   );
 };
 
-// Simple clean version
+/* -------------------------------
+   Simple Clean Version
+-------------------------------- */
 const MobileFooterSimple = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -340,10 +292,8 @@ const MobileFooterSimple = () => {
 
   return (
     <>
-      {/* Spacer */}
       <div className="h-20 lg:hidden"></div>
 
-      {/* Footer */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-50 shadow-lg">
         <div className="max-w-[600px] mx-auto px-4 py-2 pb-safe">
           <nav className="flex justify-around">
@@ -355,15 +305,11 @@ const MobileFooterSimple = () => {
                 <button
                   key={item.id}
                   onClick={() => router.push(item.href)}
-                  className={`
-                    flex flex-col items-center justify-center py-2 px-3
-                    min-w-[70px] rounded-lg transition-all duration-200
-                    ${
-                      active
-                        ? "text-blue-600 bg-blue-50"
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                    }
-                  `}
+                  className={`flex flex-col items-center justify-center py-2 px-3 min-w-[70px] rounded-lg transition-all duration-200 ${
+                    active
+                      ? "text-blue-600 bg-blue-50"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  }`}
                 >
                   <Icon
                     className={`h-5 w-5 mb-1 ${
@@ -378,7 +324,7 @@ const MobileFooterSimple = () => {
                     {item.label}
                   </span>
                   {active && (
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full mt-1"></div>
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full mt-1" />
                   )}
                 </button>
               );
