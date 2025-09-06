@@ -33,10 +33,10 @@ const ThankYouPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 relative overflow-hidden text-white">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-green-400 via-emerald-500 to-green-700 relative overflow-hidden text-white">
       {/* Animated Background Circles */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-white opacity-10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl animate-ping"></div>
+      <div className="absolute top-0 left-0 w-72 h-72 bg-green-300 opacity-20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-green-200 opacity-20 rounded-full blur-3xl animate-ping"></div>
 
       {/* Success Icon */}
       <div className="relative w-28 h-28 bg-green-500 rounded-full flex items-center justify-center shadow-2xl animate-bounce mb-6">
@@ -67,7 +67,7 @@ const ThankYouPage = () => {
       <div className="relative w-32 h-32 mb-8">
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
           <circle
-            className="text-gray-300"
+            className="text-green-300"
             stroke="currentColor"
             strokeWidth="6"
             fill="transparent"
@@ -108,21 +108,11 @@ const ThankYouPage = () => {
           🏠 Go to Home
         </button>
         <button
-          onClick={() => router.push("/bookings")}
-          className="px-6 py-3 bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 rounded-xl font-semibold shadow-lg transition transform hover:scale-105"
+          onClick={() => router.push("/profile")}
+          className="px-6 py-3 bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-500 hover:to-emerald-700 rounded-xl font-semibold shadow-lg transition transform hover:scale-105"
         >
           📋 View Bookings
         </button>
-      </div>
-
-      {/* Floating Confetti Elements */}
-      <div className="absolute top-10 left-10 text-3xl animate-spin">✨</div>
-      <div className="absolute top-20 right-16 text-3xl animate-bounce">🎊</div>
-      <div
-        className="absolute bottom-16 left-16 text-3xl animate-pulse"
-        style={{ animationDelay: "1s" }}
-      >
-        🎉
       </div>
     </div>
   );

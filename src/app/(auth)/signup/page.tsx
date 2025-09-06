@@ -481,16 +481,16 @@ const SignupComponent = () => {
               {/* Terms and Conditions */}
               <div className="text-center pt-4">
                 <p className="text-xs text-gray-600">
-                  By signing up, you agree to our{" "}
+                  By signing up, you agree to our
                   <Link
-                    href="//privacypolicy"
+                    href="/privacypolicy"
                     className="text-green-600 hover:text-green-800 underline"
                   >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
                   <Link
-                    href="//privacypolicy"
+                    href="/privacypolicy"
                     className="text-green-600 hover:text-green-800 underline"
                   >
                     Privacy Policy

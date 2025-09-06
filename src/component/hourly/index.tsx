@@ -683,16 +683,17 @@ const BookingPage = () => {
 
     const bookingPayload = {
       hotel_id: selectedHotel?.id,
-      check_in_datetime: searchDetails.checkIn,
-      check_out_datetime: searchDetails.checkOut,
+      check_in_datetime: new Date(searchDetails.checkIn),
+      check_out_datetime: new Date(searchDetails.checkOut),
+      chck_in_hours: searchDetails.checkInTime,
       days: 1,
       item_id: selectedSlot,
-      total_amount: 1000,
+      total_amount: selectedSlotDetails.rate_per_hour,
       user_id: userData.id,
+      duration_hours: selectedSlotDetails.duration_hours,
       booking_type: "HOTEL",
       amount: selectedSlotDetails.rate_per_hour,
       order_type: "HOURS",
-      payment_method: "COD",
       currency: "INR",
       tax_amount: 0,
       guest_count: 2,
@@ -726,12 +727,13 @@ const BookingPage = () => {
 
     const bookingPayload = {
       hotel_id: selectedHotel?.id,
-      check_in_datetime: searchDetails.checkIn,
-      check_out_datetime: searchDetails.checkIn,
+      check_in_datetime: new Date(searchDetails.checkIn),
+      check_out_datetime: new Date(searchDetails.checkOut),
       days: 1,
       item_id: selectedSlot,
-      total_amount: 1000,
+      total_amount: selectedSlotDetails.rate_per_hour,
       user_id: userData.id,
+      duration_hours: selectedSlotDetails.duration_hours,
       booking_type: "HOTEL",
       amount: selectedSlotDetails.rate_per_hour,
       order_type: "HOURS",
@@ -802,6 +804,8 @@ const BookingPage = () => {
   console.log(searchDetails);
   console.log(selectedSlot);
   console.log(user);
+  console.log("selected hotel is hererer--------------");
+  console.log(selectedHotel);
 
   // Loading Skeleton Component
   const LoadingSkeleton = () => (
@@ -962,7 +966,7 @@ const BookingPage = () => {
                   Select a hotel and time slot
                 </p>
                 <p className="text-gray-400 text-sm">
-                  Choose from our premium hourly workspaces to get started
+                  Choose from our premium hourly Hotels to get started
                 </p>
               </div>
             )}
@@ -986,10 +990,10 @@ const BookingPage = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Find Your Perfect Workspace
+            Find Your Perfect hotel
           </h1>
           <p className="text-gray-600 text-lg">
-            Book premium hourly workspaces across the city
+            Book premium hourly Hotel across the city
           </p>
         </div>
 

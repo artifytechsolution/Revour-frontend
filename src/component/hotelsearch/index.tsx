@@ -52,7 +52,6 @@ const HotelSearchComponent = () => {
       destination: "",
       checkIn: "",
       checkInTime: "12:00",
-      checkOutTime: "13:00",
     },
   });
 
@@ -86,6 +85,8 @@ const HotelSearchComponent = () => {
   };
 
   const onHourlySubmit = (data) => {
+    console.log("main details is comminggggg-----------!!!");
+    console.log(data);
     dispatch(setSearchDetails({ ...data, bookingType: "hourly" }));
     toast.success("Searching for hourly hotels...");
     router.push(`/hourly`);

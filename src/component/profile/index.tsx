@@ -2178,6 +2178,7 @@ interface Booking {
   duration?: string;
   orderId?: string;
   checkInDate?: Date;
+  checkOutDate?: Date;
 }
 
 interface UserProfile {
@@ -2220,16 +2221,22 @@ interface OrderData {
 }
 
 /* --------------------------- Updated Helper Functions ----------------------------- */
+// Get current real date
 const getCurrentDate = (): Date => {
-  return new Date("2025-08-31T00:00:00.000Z"); // Current date: August 31, 2025
+  return new Date(); // Use actual current date
 };
 
-// Check if booking is for today or tomorrow (both count as "today")
-const isTodayOrTomorrow = (date: Date): boolean => {
-  const today = getCurrentDate();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+// Check if check-in is within 24 hours from now
+const isWithin24Hours = (checkInDate: Date): boolean => {
+  const now = getCurrentDate();
+  const timeDiff = checkInDate.getTime() - now.getTime();
+  const hoursDiff = timeDiff / (1000 * 60 * 60); // Convert to hours
+  return hoursDiff <= 24 && hoursDiff >= 0; // Within 24 hours and in the future
+};
 
+// Check if check-in date is today
+const isToday = (date: Date): boolean => {
+  const today = getCurrentDate();
   const dateStart = new Date(
     date.getFullYear(),
     date.getMonth(),
@@ -2240,39 +2247,10 @@ const isTodayOrTomorrow = (date: Date): boolean => {
     today.getMonth(),
     today.getDate()
   );
-  const tomorrowStart = new Date(
-    tomorrow.getFullYear(),
-    tomorrow.getMonth(),
-    tomorrow.getDate()
-  );
-
-  return (
-    dateStart.getTime() === todayStart.getTime() ||
-    dateStart.getTime() === tomorrowStart.getTime()
-  );
+  return dateStart.getTime() === todayStart.getTime();
 };
 
-// Check if date is in the future (after tomorrow)
-const isFutureDate = (date: Date): boolean => {
-  const today = getCurrentDate();
-  const dayAfterTomorrow = new Date(today);
-  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-
-  const dateStart = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
-  const futureStart = new Date(
-    dayAfterTomorrow.getFullYear(),
-    dayAfterTomorrow.getMonth(),
-    dayAfterTomorrow.getDate()
-  );
-
-  return dateStart >= futureStart;
-};
-
-// Check if date is in the past (before today)
+// Check if check-in date is in the past
 const isPastDate = (date: Date): boolean => {
   const today = getCurrentDate();
   const todayStart = new Date(
@@ -2285,11 +2263,10 @@ const isPastDate = (date: Date): boolean => {
     date.getMonth(),
     date.getDate()
   );
-
   return dateStart < todayStart;
 };
 
-// Enhanced date range formatter for single day bookings
+// Enhanced date range formatter to show both dates clearly
 const formatDateRange = (
   checkIn: string,
   checkOut: string,
@@ -2308,23 +2285,30 @@ const formatDateRange = (
     });
   };
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   // For hourly bookings (less than 24 hours)
   if (durationHours && durationHours < 24) {
     return `${formatDate(checkInDate)} (${durationHours} hours)`;
   }
 
-  // Check if it's a same-day booking or consecutive days (like Aug 30 - Aug 31)
-  const daysDifference = Math.ceil(
-    (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  // Check if it's a same-day booking
+  const isSameDay = checkInDate.toDateString() === checkOutDate.toDateString();
 
-  if (daysDifference <= 1) {
-    // Single day booking (same day or next day checkout)
-    return formatDate(checkInDate);
+  if (isSameDay) {
+    return `${formatDate(checkInDate)} • ${formatTime(
+      checkInDate
+    )} - ${formatTime(checkOutDate)}`;
   }
 
-  // Multi-day booking
-  return `${formatDate(checkInDate)} – ${formatDate(checkOutDate)}`;
+  // Multi-day booking - show both dates
+  return `${formatDate(checkInDate)} - ${formatDate(checkOutDate)}`;
 };
 
 const transformOrderToBooking = (order: OrderData): Booking => {
@@ -2333,6 +2317,9 @@ const transformOrderToBooking = (order: OrderData): Booking => {
 
   const checkInDate = new Date(
     reservation?.check_in_datetime || order.createdAt
+  );
+  const checkOutDate = new Date(
+    reservation?.check_out_datetime || order.createdAt
   );
 
   return {
@@ -2358,6 +2345,7 @@ const transformOrderToBooking = (order: OrderData): Booking => {
       ? `${reservation.duration_hours} hours`
       : undefined,
     checkInDate,
+    checkOutDate,
   };
 };
 
@@ -2485,44 +2473,48 @@ function MinimalBookingCard({
   };
 
   const statusColors = getStatusColor(status);
-  const isTodayTomorrowBooking = checkInDate
-    ? isTodayOrTomorrow(checkInDate)
+
+  // Check if check-in is today
+  const isTodayBooking = checkInDate ? isToday(checkInDate) : false;
+
+  // Check if check-in is within 24 hours
+  const isWithin24HoursBooking = checkInDate
+    ? isWithin24Hours(checkInDate)
     : false;
-  const isFutureBooking = checkInDate ? isFutureDate(checkInDate) : false;
-  const today = getCurrentDate();
 
-  // Determine if it's today or tomorrow for badge display
-  const getTodayTomorrowLabel = () => {
+  // Get today/tomorrow label
+  const getTodayLabel = () => {
     if (!checkInDate) return "Soon";
-    const checkInDateString = checkInDate.toDateString();
-    const todayString = today.toDateString();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowString = tomorrow.toDateString();
 
-    if (checkInDateString === todayString) return "Today";
-    if (checkInDateString === tomorrowString) return "Tomorrow";
+    if (isToday(checkInDate)) return "Today";
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (checkInDate.toDateString() === tomorrow.toDateString()) {
+      return "Tomorrow";
+    }
+
     return "Soon";
   };
 
   // ✅ UPDATED CANCEL LOGIC:
   // - No cancel for past bookings
   // - No cancel for cancelled bookings
-  // - No cancel for today/tomorrow bookings (too close to check-in)
-  // - Only allow cancel for future bookings (day after tomorrow onwards)
+  // - No cancel if check-in is today or within 24 hours
   const showCancelButton =
     onCancel &&
     !isPast &&
     status !== "cancel" &&
-    !isTodayTomorrowBooking && // ✅ No cancel for today/tomorrow
-    isFutureBooking; // Only future bookings can be cancelled
+    !isTodayBooking && // No cancel if check-in is today
+    !isWithin24HoursBooking; // No cancel if check-in is within 24 hours
 
   return (
     <Card
       sx={{
         borderRadius: 2,
         border: "1px solid",
-        borderColor: isTodayTomorrowBooking ? "#f59e0b" : "grey.200",
+        borderColor:
+          isTodayBooking || isWithin24HoursBooking ? "#f59e0b" : "grey.200",
         boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
         transition: "all 0.2s ease",
         "&:hover": {
@@ -2568,7 +2560,7 @@ function MinimalBookingCard({
                   {status}
                 </Typography>
               </Box>
-              {isTodayTomorrowBooking && (
+              {(isTodayBooking || isWithin24HoursBooking) && (
                 <Box
                   sx={{
                     px: 1.5,
@@ -2587,7 +2579,7 @@ function MinimalBookingCard({
                       fontSize: "0.75rem",
                     }}
                   >
-                    {getTodayTomorrowLabel()}
+                    {getTodayLabel()}
                   </Typography>
                 </Box>
               )}
@@ -2897,7 +2889,7 @@ export default function ProfileComponent() {
         return uploadedImageUrl;
       }
 
-      throw new Error(response.data.message || "Upload failed");
+      // throw new Error(response.data.message || "Upload failed");
     } catch (error: any) {
       console.error("❌ Profile Image Upload Failed:", error);
 
@@ -2916,7 +2908,7 @@ export default function ProfileComponent() {
     }
   };
 
-  // ✅ UPDATED: Enhanced booking categorization logic
+  // ✅ UPDATED: Enhanced booking categorization logic using real current date
   useEffect(() => {
     if (Array.isArray(orderList) && orderList.length > 0) {
       const pastBookings: Booking[] = [];
@@ -2929,13 +2921,13 @@ export default function ProfileComponent() {
             order.reservation?.check_in_datetime || order.createdAt
           );
 
-          // ✅ NEW LOGIC:
+          // ✅ UPDATED LOGIC using real current date:
           // - Past: Only dates before today
-          // - Upcoming: Today, tomorrow, and future dates
+          // - Upcoming: Today and future dates
           if (isPastDate(checkInDate)) {
             pastBookings.push({ ...booking, status: booking.status });
           } else {
-            // Today, tomorrow, and future bookings go to upcoming
+            // Today and future bookings go to upcoming
             upcomingBookings.push({
               ...booking,
               status: booking.status,
@@ -2960,7 +2952,7 @@ export default function ProfileComponent() {
         return dateB.getTime() - dateA.getTime();
       });
 
-      // Sort upcoming bookings (today/tomorrow first, then by check-in date)
+      // Sort upcoming bookings (earliest check-in first)
       upcomingBookings.sort((a, b) => {
         const orderA = orderList.find(
           (o: any) => o.order_id?.toString() === a.id
@@ -2976,14 +2968,7 @@ export default function ProfileComponent() {
           orderB?.reservation?.check_in_datetime || orderB?.createdAt || ""
         );
 
-        const isATodayTomorrow = isTodayOrTomorrow(checkInA);
-        const isBTodayTomorrow = isTodayOrTomorrow(checkInB);
-
-        // Prioritize today/tomorrow bookings first
-        if (isATodayTomorrow && !isBTodayTomorrow) return -1;
-        if (!isATodayTomorrow && isBTodayTomorrow) return 1;
-
-        // Then sort by check-in date (earliest first)
+        // Sort by check-in date (earliest first)
         return checkInA.getTime() - checkInB.getTime();
       });
 
@@ -3328,7 +3313,9 @@ export default function ProfileComponent() {
                             backgroundColor: alpha("#6b7280", 0.1),
                           },
                         }}
-                      ></IconButton>
+                      >
+                        {/* <EditIcon sx={{ fontSize: 18 }} /> */}
+                      </IconButton>
                     </Box>
                     <Typography
                       sx={{
@@ -3337,7 +3324,7 @@ export default function ProfileComponent() {
                         fontWeight: 500,
                       }}
                     >
-                      {user.email} • {user.phone || "not avilable"}
+                      {user.email} • {user.phone || "not available"}
                     </Typography>
                   </>
                 )}

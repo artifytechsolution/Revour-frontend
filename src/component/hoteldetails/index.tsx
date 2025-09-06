@@ -1139,12 +1139,23 @@
 // export default HotelDetailsComponent;
 
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faStar,
+  faMapMarkerAlt,
+  faPhone,
+  faEnvelope,
+  faSpinner,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 
 // --- HOOKS ---
 import { useFindHotel } from "@src/hooks/apiHooks";
+import { useAppSelector } from "@src/redux/store";
+import { selectSearchDetails, selectUser } from "@src/redux/reducers/authSlice";
 
 // --- ICONS ---
 import CloseIcon from "@mui/icons-material/Close";
@@ -1174,16 +1185,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import PolicyIcon from "@mui/icons-material/Policy";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import CancelIcon from "@mui/icons-material/Cancel";
-import PaymentIcon from "@mui/icons-material/Payment";
-import PetsIcon from "@mui/icons-material/Pets";
-import SmokingRoomsIcon from "@mui/icons-material/SmokingRooms";
-import PersonIcon from "@mui/icons-material/Person";
-import SecurityIcon from "@mui/icons-material/Security";
 
-// --- SUB-COMPONENTS ---
-
-// amenities.js
+// All Material UI Icons for Amenities
 import {
   Pool,
   FitnessCenter,
@@ -1222,7 +1225,6 @@ import {
 } from "@mui/icons-material";
 
 export const amenitiesConfig = [
-  // Existing
   { key: "pool", name: "Swimming Pool", icon: Pool },
   { key: "gym", name: "Gym / Fitness Center", icon: FitnessCenter },
   { key: "parking", name: "Parking", icon: LocalParking },
@@ -1235,29 +1237,21 @@ export const amenitiesConfig = [
   { key: "laundry", name: "Laundry Service", icon: LocalLaundryService },
   { key: "tv", name: "Flat Screen TV", icon: Tv },
   { key: "elevator", name: "Elevator", icon: Elevator },
-
-  // Essential Room Amenities
   { key: "bed", name: "Comfortable Bed", icon: KingBed },
   { key: "outlets", name: "Power Outlets Near Bed", icon: Power },
   { key: "drinkingWater", name: "Drinking Water Bottles", icon: LocalDrink },
   { key: "teaCoffee", name: "Tea / Coffee Maker", icon: Coffee },
   { key: "desk", name: "Desk & Chair", icon: Desk },
   { key: "luggageRack", name: "Luggage Rack", icon: Luggage },
-
-  // Bathroom
   { key: "bathroom", name: "Attached Bathroom", icon: Bathroom },
   { key: "hotWater", name: "Hot & Cold Water", icon: Opacity },
   { key: "towels", name: "Fresh Towels", icon: LocalHotel },
   { key: "toiletries", name: "Basic Toiletries", icon: LocalGroceryStore },
-
-  // Services
   { key: "fastCheckin", name: "Quick Check-In & Out", icon: CheckCircle },
   { key: "housekeeping", name: "On-Demand Housekeeping", icon: RoomService },
   { key: "reception", name: "24x7 Reception", icon: Security },
   { key: "storage", name: "Luggage Storage", icon: Luggage },
   { key: "cabBooking", name: "Cab / Taxi Booking", icon: LocalTaxi },
-
-  // Food & Beverages
   { key: "roomService", name: "In-Room Dining", icon: RoomService },
   { key: "miniFridge", name: "Mini Fridge", icon: LocalBar },
   {
@@ -1265,21 +1259,15 @@ export const amenitiesConfig = [
     name: "Complimentary Water / Tea / Coffee",
     icon: LocalDrink,
   },
-
-  // Safety & Privacy
   { key: "soundproof", name: "Soundproof Rooms", icon: Security },
   { key: "keycard", name: "Key Card Access", icon: Lock },
   { key: "cctv", name: "CCTV Security", icon: Security },
   { key: "secureBilling", name: "Secure Billing", icon: CheckCircle },
-
-  // Optional Value-Add
   { key: "privateParking", name: "Private Parking", icon: DirectionsCar },
   { key: "lounge", name: "Lounge / Waiting Area", icon: LocalBar },
   { key: "business", name: "Business Center", icon: BusinessCenter },
   { key: "printer", name: "Printer & Office Essentials", icon: Print },
   { key: "hygiene", name: "Hygiene Add-ons", icon: LocalHospital },
-
-  // Trip-Useful
   { key: "blackoutCurtains", name: "Blackout Curtains", icon: LocalHotel },
   { key: "shower", name: "Good Shower", icon: Opacity },
   { key: "hairDryer", name: "Hair Dryer", icon: Spa },
@@ -1367,7 +1355,6 @@ const GalleryModal = ({ images, startIndex, onClose }) => {
         className="relative w-full max-w-6xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors z-10"
@@ -1376,7 +1363,6 @@ const GalleryModal = ({ images, startIndex, onClose }) => {
           <CloseIcon sx={{ fontSize: { xs: 32, sm: 40 } }} />
         </button>
 
-        {/* Main Image */}
         <div className="relative overflow-hidden rounded-lg bg-black/50 aspect-video">
           <img
             src={currentImage.src}
@@ -1387,7 +1373,6 @@ const GalleryModal = ({ images, startIndex, onClose }) => {
           />
         </div>
 
-        {/* Info & Navigation */}
         <div className="mt-3 text-white flex flex-col sm:flex-row justify-between items-center gap-2">
           <p className="font-medium text-sm sm:text-base">
             {currentImage.caption}
@@ -1412,7 +1397,6 @@ const GalleryModal = ({ images, startIndex, onClose }) => {
           <ChevronRightIcon sx={{ fontSize: { xs: 24, sm: 32 } }} />
         </button>
 
-        {/* Thumbnails */}
         <div className="mt-4 flex space-x-2 overflow-x-auto py-2 px-1">
           {images.map((image, index) => (
             <img
@@ -1434,7 +1418,6 @@ const GalleryModal = ({ images, startIndex, onClose }) => {
 // Terms & Conditions Component
 const TermsAndConditionsSection = ({ hotelName, privacyData }) => {
   const [expandedSections, setExpandedSections] = useState({});
-  const [iconsmain, seticonmain] = useState([]);
 
   const toggleSection = (sectionId) => {
     setExpandedSections((prev) => ({
@@ -1443,24 +1426,16 @@ const TermsAndConditionsSection = ({ hotelName, privacyData }) => {
     }));
   };
 
-  // helper: convert description into <ul><li>..</li></ul>
-  const formatDescription = (desc: string) => {
+  const formatDescription = (desc) => {
     if (!desc) return "<ul></ul>";
-
-    // If already contains <ul>, return as is
-    if (desc.includes("<ul")) {
-      return desc;
-    }
-
-    // Split plain text into points (by newline, period, or ;)
+    if (desc.includes("<ul")) return desc;
     const points = desc
       .split(/[\n.;]+/)
       .map((p) => p.trim())
       .filter((p) => p.length > 0);
-
-    // Wrap into bullet list
     return `<ul>${points.map((p) => `<li>${p}</li>`).join("")}</ul>`;
   };
+
   return (
     <section className="py-6 border-b">
       <div className="flex items-center mb-4">
@@ -1477,7 +1452,7 @@ const TermsAndConditionsSection = ({ hotelName, privacyData }) => {
       </div>
 
       <div className="space-y-4">
-        {privacyData.map((section: any) => (
+        {privacyData?.map((section) => (
           <div
             key={section.id}
             className="border border-gray-200 rounded-lg overflow-hidden"
@@ -1524,10 +1499,521 @@ const TermsAndConditionsSection = ({ hotelName, privacyData }) => {
   );
 };
 
+// HOURLY BOOKING POPUP COMPONENT
+const HourlyBookingPopup = ({ isOpen, onClose, hotelData, defaultImage }) => {
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("online");
+  const [isBooking, setIsBooking] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+
+  const router = useRouter();
+  const searchDetails = useAppSelector(selectSearchDetails);
+  const userData = useAppSelector(selectUser);
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  // Reset states when popup closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedHotel(null);
+      setSelectedSlot(null);
+      setShowPaymentDetails(false);
+      setShowPaymentOptions(false);
+      setCurrentStep(1);
+    }
+  }, [isOpen]);
+
+  const selectedSlotDetails = selectedHotel?.room_hourly_rates?.find(
+    (slot) => slot.id === selectedSlot
+  );
+
+  const handleHotelSlotSelect = (hotel, slotId) => {
+    setSelectedHotel(hotel);
+    setSelectedSlot(slotId);
+    setShowPaymentDetails(true);
+    setCurrentStep(2);
+  };
+
+  const handleConfirmBooking = () => {
+    if (!selectedHotel || !selectedSlotDetails) {
+      toast.error("Please select a hotel and time slot");
+      return;
+    }
+
+    if (!userData) {
+      toast.error("Please log in to continue");
+      router.push("/login");
+      return;
+    }
+
+    setShowPaymentOptions(true);
+    setCurrentStep(3);
+  };
+
+  const handlePaymentMethodSelect = async (method) => {
+    setPaymentMethod(method);
+    setShowPaymentOptions(false);
+
+    if (method === "cash") {
+      await handleCashBooking();
+    } else {
+      await handleOnlinePayment();
+    }
+  };
+
+  const handleCashBooking = async () => {
+    setIsBooking(true);
+
+    const bookingPayload = {
+      hotel_id: selectedHotel?.id,
+      check_in_datetime: searchDetails.checkIn,
+      check_out_datetime: searchDetails.checkOut,
+      days: 1,
+      item_id: selectedSlot,
+      total_amount: selectedSlotDetails.rate_per_hour,
+      user_id: userData.id,
+      booking_type: "HOTEL",
+      amount: selectedSlotDetails.rate_per_hour,
+      order_type: "HOURS",
+      payment_method: "COD",
+      currency: "INR",
+      tax_amount: 0,
+      guest_count: 2,
+    };
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bookingPayload),
+        }
+      );
+
+      const order = await response.json();
+      if (order.error) throw new Error(order.error);
+
+      toast.success(order.message || "Booking successful!");
+      onClose();
+      router.push("/thankyou");
+    } catch (err) {
+      toast.error(err.message || "Failed to create booking.");
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  const handleOnlinePayment = async () => {
+    setIsBooking(true);
+
+    const bookingPayload = {
+      hotel_id: selectedHotel?.id,
+      check_in_datetime: searchDetails.checkIn,
+      check_out_datetime: searchDetails.checkOut,
+      days: 1,
+      item_id: selectedSlot,
+      total_amount: selectedSlotDetails.rate_per_hour,
+      user_id: userData.id,
+      booking_type: "HOTEL",
+      amount: selectedSlotDetails.rate_per_hour,
+      order_type: "HOURS",
+      currency: "INR",
+      tax_amount: 0,
+      guest_count: 2,
+    };
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bookingPayload),
+        }
+      );
+      const order = await response.json();
+      if (order.error) throw new Error(order.error);
+
+      const options = {
+        key: order.data.key,
+        amount: order.data.amount,
+        currency: order.data.currency,
+        order_id: order.data.order_id,
+        name: selectedHotel?.name,
+        description: `Booking for HOURLY`,
+        handler: async function (response) {
+          const verify = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/order/verify`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...response,
+                bill_id: order.data.bill_id,
+              }),
+            }
+          );
+          const result = await verify.json();
+          toast.success(result.message || "Payment Successful!");
+          onClose();
+          router.push("/thankyou");
+        },
+        prefill: {
+          name: `${userData.firstName} ${userData.lastName}`,
+          email: `${userData?.email}`,
+          contact: "892389389",
+        },
+        theme: { color: "#16A34A" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (response) =>
+        toast.error("Payment failed: " + response.error.description)
+      );
+      rzp.open();
+    } catch (err) {
+      toast.error(err.message || "Failed to initiate payment.");
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  const handleBackStep = () => {
+    if (currentStep === 3) {
+      setShowPaymentOptions(false);
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      setShowPaymentDetails(false);
+      setCurrentStep(1);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedHotel(null);
+    setSelectedSlot(null);
+    setShowPaymentDetails(false);
+    setShowPaymentOptions(false);
+    setCurrentStep(1);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop Overlay */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-40 z-40 transition-opacity duration-300"
+        onClick={onClose}
+      />
+
+      {/* Centered Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl rounded-xl shadow-2xl border border-gray-200 max-h-[90vh] overflow-hidden flex flex-col mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 bg-white sticky top-0 z-10">
+            <div className="flex-1">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                {currentStep === 1 && "Select Duration"}
+                {currentStep === 2 && "Booking Details"}
+                {currentStep === 3 && "Payment"}
+              </h2>
+
+              {/* Progress Indicators */}
+              <div className="flex items-center mt-2 space-x-1">
+                {[1, 2, 3].map((step, index) => (
+                  <React.Fragment key={step}>
+                    <div
+                      className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                        step <= currentStep ? "bg-green-500" : "bg-gray-300"
+                      }`}
+                    />
+                    {index < 2 && (
+                      <div
+                        className={`w-4 h-0.5 transition-colors duration-300 ${
+                          step < currentStep ? "bg-green-500" : "bg-gray-300"
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {currentStep > 1 && (
+                <button
+                  onClick={handleBackStep}
+                  className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Back
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+              >
+                <FontAwesomeIcon
+                  icon={faTimes}
+                  className="text-gray-400 text-sm"
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Step 1: Hotel Selection */}
+            {currentStep === 1 && (
+              <div className="p-4 sm:p-6">
+                {hotelData?.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="text-5xl mb-4">🏨</div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No Hotels Available
+                    </h3>
+                    <p className="text-gray-600">
+                      Please adjust your search criteria.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {hotelData?.map((hotel) => (
+                      <div
+                        key={hotel.id}
+                        className="border border-gray-100 rounded-lg hover:border-green-200 transition-all duration-200 hover:shadow-sm"
+                      >
+                        <div className="p-4">
+                          {/* Hotel Layout */}
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            {/* Hotel Image */}
+                            <div className="w-full sm:w-24 h-32 sm:h-20 flex-shrink-0">
+                              <img
+                                src={
+                                  hotel?.hotel_images?.[0]?.image_url ||
+                                  defaultImage
+                                }
+                                alt={hotel.name}
+                                className="w-full h-full object-cover rounded-md"
+                              />
+                            </div>
+
+                            <div className="flex-1">
+                              {/* Hotel Info */}
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
+                                    {hotel.name}
+                                  </h3>
+                                  <p className="text-sm text-gray-600 flex items-center mt-1">
+                                    <FontAwesomeIcon
+                                      icon={faMapMarkerAlt}
+                                      className="text-green-500 mr-1.5 w-3"
+                                    />
+                                    {hotel.city}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Duration Options */}
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                                {hotel?.room_hourly_rates?.map((slot) => (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() =>
+                                      handleHotelSlotSelect(hotel, slot.id)
+                                    }
+                                    className="p-3 border border-green-200 rounded-lg hover:border-green-400 hover:bg-green-50 transition-all duration-200 text-center group"
+                                  >
+                                    <div className="font-semibold text-gray-900 group-hover:text-green-600">
+                                      {slot.duration_hours}h
+                                    </div>
+                                    <div className="text-green-600 font-bold text-sm">
+                                      ₹{slot.rate_per_hour}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 2: Booking Summary */}
+            {currentStep === 2 && selectedHotel && selectedSlotDetails && (
+              <div className="p-6 sm:p-8 flex items-center justify-center min-h-[400px]">
+                <div className="w-full max-w-sm">
+                  {/* Summary Card */}
+                  <div className="bg-gray-50 rounded-xl p-5 mb-6">
+                    <h3 className="font-semibold text-gray-900 mb-4 text-center">
+                      Booking Summary
+                    </h3>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Hotel</span>
+                        <span className="font-medium text-gray-900 text-right max-w-[60%] truncate">
+                          {selectedHotel.name}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Location</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedHotel.city}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Duration</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedSlotDetails.duration_hours} hours
+                        </span>
+                      </div>
+
+                      <div className="border-t border-gray-200 pt-3 mt-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg font-semibold text-gray-900">
+                            Total Amount
+                          </span>
+                          <span className="text-xl font-bold text-green-600">
+                            ₹{selectedSlotDetails.rate_per_hour}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleConfirmBooking}
+                      disabled={isBooking}
+                      className="w-full py-3.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 shadow-md hover:shadow-lg"
+                    >
+                      {isBooking ? (
+                        <div className="flex items-center justify-center">
+                          <FontAwesomeIcon
+                            icon={faSpinner}
+                            className="animate-spin mr-2"
+                          />
+                          Processing...
+                        </div>
+                      ) : (
+                        "Proceed to Payment"
+                      )}
+                    </button>
+
+                    <button
+                      onClick={clearSelection}
+                      className="w-full py-2.5 text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Change Selection
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Payment Options */}
+            {currentStep === 3 && showPaymentOptions && (
+              <div className="p-6 sm:p-8 flex items-center justify-center min-h-[400px]">
+                <div className="w-full max-w-sm">
+                  <h3 className="font-semibold text-gray-900 mb-6 text-center text-lg">
+                    Choose Payment Method
+                  </h3>
+
+                  <div className="space-y-4">
+                    {/* Online Payment */}
+                    <button
+                      onClick={() => handlePaymentMethodSelect("online")}
+                      disabled={isBooking}
+                      className="w-full p-4 border border-gray-200 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all duration-200 text-left disabled:opacity-50 shadow-sm hover:shadow-md"
+                    >
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                          <span className="text-xl">💳</span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">
+                            Pay Online
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            UPI, Card, Net Banking
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Cash Payment */}
+                    <button
+                      onClick={() => handlePaymentMethodSelect("cash")}
+                      disabled={isBooking}
+                      className="w-full p-4 border border-gray-200 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all duration-200 text-left disabled:opacity-50 shadow-sm hover:shadow-md"
+                    >
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                          <span className="text-xl">💵</span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">
+                            Cash on Counter
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            Pay at hotel reception
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Loading State */}
+                  {isBooking && (
+                    <div className="text-center mt-6">
+                      <div className="flex items-center justify-center text-green-600">
+                        <FontAwesomeIcon
+                          icon={faSpinner}
+                          className="animate-spin mr-2 text-lg"
+                        />
+                        <span className="font-semibold">Processing...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 // --- MAIN COMPONENT ---
 const HotelDetailsComponent = ({ params }) => {
   const [hotel, setHotel] = useState(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  // ADD HOURLY BOOKING STATE
+  const [isHourlyBookingOpen, setIsHourlyBookingOpen] = useState(false);
 
   const router = useRouter();
   const {
@@ -1538,14 +2024,12 @@ const HotelDetailsComponent = ({ params }) => {
     mutate: fetchHotel,
   } = useFindHotel();
 
-  // Initial data fetch
   useEffect(() => {
     if (params) {
       fetchHotel({ params });
     }
   }, [params, fetchHotel]);
 
-  // Handle API response
   useEffect(() => {
     if (isHotelError && !isHotelLoading) {
       toast.error(
@@ -1558,7 +2042,6 @@ const HotelDetailsComponent = ({ params }) => {
     }
   }, [isHotelError, isHotelLoading, hotelError, hotelData, router]);
 
-  // Transform hotel images for the gallery component
   const galleryImages =
     hotel?.hotel_images?.map((img) => ({
       src: img.image_url,
@@ -1572,8 +2055,7 @@ const HotelDetailsComponent = ({ params }) => {
   if (isHotelLoading) {
     return <LoadingSkeleton />;
   }
-  console.log("hotel data is comminggg form thattt------");
-  console.log(hotel?.Amenity?.map((item) => item.name));
+
   if (isHotelError || !hotel) {
     return (
       <div className="flex items-center justify-center h-screen text-center">
@@ -1636,19 +2118,17 @@ const HotelDetailsComponent = ({ params }) => {
         </section>
 
         {/* Amenities Section */}
-        {/* Amenities Section */}
         <section className="py-6 border-b">
           <h2 className="text-xl font-semibold mb-4">Amenities</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {hotel?.Amenity?.map((apiAmenity, index) => {
-              // Find matching amenity from config
               const matched = amenitiesConfig.find(
                 (cfg) =>
                   cfg.key.toLowerCase() ===
                   apiAmenity.name.toLowerCase().replace(/\s+/g, "")
               );
 
-              if (!matched) return null; // Skip unknown amenities from API
+              if (!matched) return null;
 
               const Icon = matched.icon;
               return (
@@ -1672,79 +2152,74 @@ const HotelDetailsComponent = ({ params }) => {
           )}
 
           <div className="space-y-6">
-            {
-              hotel.room_types && hotel.room_types.length > 0
-                ? hotel.room_types.map((room) => (
-                    <div
-                      key={room.id}
-                      className="border border-gray-200 rounded-lg hover:shadow-lg transition-shadow overflow-hidden flex flex-col sm:flex-row"
-                    >
-                      <div className="w-full sm:w-1/3 flex-shrink-0">
-                        <img
-                          src={room.room_img || defaultImage}
-                          alt={room.type_name}
-                          className="w-full h-48 sm:h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-4 flex flex-col flex-grow">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-semibold text-lg">
-                              {room.type_name}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {room.description}
-                            </p>
-                          </div>
-                          <div className="text-right shrink-0 ml-4">
-                            <p className="text-xl font-bold text-green-600">
-                              ₹{room.base_price}
-                              <span className="text-sm font-normal text-gray-500">
-                                /night
-                              </span>
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {room.taxes || "includes taxes & fees"}
-                            </p>
-                          </div>
+            {hotel.room_types && hotel.room_types.length > 0
+              ? hotel.room_types.map((room) => (
+                  <div
+                    key={room.id}
+                    className="border border-gray-200 rounded-lg hover:shadow-lg transition-shadow overflow-hidden flex flex-col sm:flex-row"
+                  >
+                    <div className="w-full sm:w-1/3 flex-shrink-0">
+                      <img
+                        src={room.room_img || defaultImage}
+                        alt={room.type_name}
+                        className="w-full h-48 sm:h-full object-cover"
+                      />
+                    </div>
+                    <div className="p-4 flex flex-col flex-grow">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {room.type_name}
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {room.description}
+                          </p>
                         </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {[
-                            { icon: WifiIcon, text: "Free WiFi" },
-                            { icon: AcUnitIcon, text: "AC" },
-                            { icon: TvIcon, text: "TV" },
-                          ].map((feature, fIndex) => (
-                            <span
-                              key={fIndex}
-                              className="text-xs bg-gray-100 px-2 py-1 rounded-full flex items-center"
-                            >
-                              <feature.icon className="text-green-500 mr-1 text-sm" />{" "}
-                              {feature.text}
+                        <div className="text-right shrink-0 ml-4">
+                          <p className="text-xl font-bold text-green-600">
+                            ₹{room.base_price}
+                            <span className="text-sm font-normal text-gray-500">
+                              /night
                             </span>
-                          ))}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {room.taxes || "includes taxes & fees"}
+                          </p>
                         </div>
-                        <div className="mt-auto pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                          <button
-                            onClick={() => setIsGalleryOpen(true)}
-                            className="text-green-600 text-sm font-medium flex items-center hover:underline"
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {[
+                          { icon: WifiIcon, text: "Free WiFi" },
+                          { icon: AcUnitIcon, text: "AC" },
+                          { icon: TvIcon, text: "TV" },
+                        ].map((feature, fIndex) => (
+                          <span
+                            key={fIndex}
+                            className="text-xs bg-gray-100 px-2 py-1 rounded-full flex items-center"
                           >
-                            <ImageIcon className="mr-1 text-base" /> View Photos
-                          </button>
-                          <button
-                            onClick={() => router.push(`/order/${room.id}`)}
-                            className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          >
-                            Select Room
-                          </button>
-                        </div>
+                            <feature.icon className="text-green-500 mr-1 text-sm" />{" "}
+                            {feature.text}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="mt-auto pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <button
+                          onClick={() => setIsGalleryOpen(true)}
+                          className="text-green-600 text-sm font-medium flex items-center hover:underline"
+                        >
+                          <ImageIcon className="mr-1 text-base" /> View Photos
+                        </button>
+                        <button
+                          onClick={() => router.push(`/order/${room.id}`)}
+                          className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                          Select Room
+                        </button>
                       </div>
                     </div>
-                  ))
-                : ""
-              // <p className="text-gray-500 text-center py-6">
-              //   No rooms available
-              // </p>
-            }
+                  </div>
+                ))
+              : ""}
           </div>
         </section>
 
@@ -1839,20 +2314,30 @@ const HotelDetailsComponent = ({ params }) => {
           </div>
         </section>
 
-        {/* Bottom Buttons - Mobile */}
-        <div className="lg:hidden sticky bottom-0 bg-white/80 backdrop-blur-sm -mx-4 -mb-6 px-4 py-3 border-t mt-6 flex justify-between items-center gap-3">
-          <div className="text-left">
-            <p className="font-bold">
-              ${hotel.room_types?.[0]?.base_price || "N/A"}
-            </p>
-            <p className="text-xs text-gray-600">/night</p>
+        {/* Minimal Clean Design - Recommended */}
+        <div className="lg:hidden sticky bottom-0 bg-white border-t border-gray-200 -mx-4 -mb-6 px-4 py-3 shadow-lg">
+          <div className="flex items-center justify-between gap-3">
+            {/* Price Info */}
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-gray-900"></span>
+              <span className="text-xs text-gray-500"></span>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-2">
+              {/* Conditional Hourly Button */}
+              {hotel?.room_hourly_rates &&
+                hotel.room_hourly_rates.length > 0 && (
+                  <button
+                    onClick={() => setIsHourlyBookingOpen(true)}
+                    className="bg-blue-600 text-white text-sm font-medium py-2.5 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+                  >
+                    <AccessTimeIcon className="w-4 h-4" />
+                    Hourly
+                  </button>
+                )}
+            </div>
           </div>
-          <button
-            onClick={() => router.push(`/order/${hotel.room_types?.[0]?.id}`)}
-            className="bg-green-600 text-white text-center text-sm font-medium py-3 rounded-lg hover:bg-green-700 transition-colors flex-grow"
-          >
-            Book Now
-          </button>
         </div>
       </main>
 
@@ -1864,6 +2349,14 @@ const HotelDetailsComponent = ({ params }) => {
           onClose={() => setIsGalleryOpen(false)}
         />
       )}
+
+      {/* ADD HOURLY BOOKING POPUP */}
+      <HourlyBookingPopup
+        isOpen={isHourlyBookingOpen}
+        onClose={() => setIsHourlyBookingOpen(false)}
+        hotelData={hotel?.room_hourly_rates ? [hotel] : []}
+        defaultImage={defaultImage}
+      />
     </>
   );
 };
