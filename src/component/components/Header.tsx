@@ -197,7 +197,7 @@ export default function Header() {
             </button>
           )}
 
-          {isLogin && (
+          {/* {isLogin && (
             <Link
               href="/profile"
               className="flex items-center space-x-1 text-gray-600 hover:text-green-600 transition-colors"
@@ -206,7 +206,7 @@ export default function Header() {
               <AccountCircleIcon />
               <span>Profile</span>
             </Link>
-          )}
+          )} */}
         </nav>
       </div>
     </header>
