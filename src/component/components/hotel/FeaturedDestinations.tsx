@@ -387,7 +387,7 @@ function FeaturedDestinations() {
                 })}
               </div>
 
-              <div className="flex flex-wrap justify-center items-center mt-10 gap-2">
+              {/* <div className="flex flex-wrap justify-center items-center mt-10 gap-2">
                 <button
                   onClick={handlePrevPage}
                   disabled={currentPage === 1}
@@ -415,7 +415,7 @@ function FeaturedDestinations() {
                 >
                   Next
                 </button>
-              </div>
+              </div> */}
             </>
           ) : (
             <div className="text-center text-gray-600 text-lg">
