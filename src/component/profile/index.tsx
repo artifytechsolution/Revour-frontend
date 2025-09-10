@@ -2116,9 +2116,7 @@
 // }
 
 //new code
-
 "use client";
-
 import { useState, ChangeEvent, useEffect } from "react";
 import {
   Box,
@@ -2203,6 +2201,7 @@ interface OrderData {
     booking_type: string;
     duration_hours: number;
     status: string;
+    reservation_id: number;
     hotel: {
       name: string;
       description: string;
@@ -2322,10 +2321,29 @@ const transformOrderToBooking = (order: OrderData): Booking => {
     reservation?.check_out_datetime || order.createdAt
   );
 
+  // Map status properly from API response
+  const getBookingStatus = (): "Completed" | "Confirmed" | "cancel" => {
+    const orderStatus = order.status?.toLowerCase();
+    const reservationStatus = reservation?.status?.toLowerCase();
+
+    if (
+      orderStatus === "cancel" ||
+      orderStatus === "cancelled" ||
+      reservationStatus === "cancel" ||
+      reservationStatus === "cancelled"
+    ) {
+      return "cancel";
+    }
+    if (orderStatus === "completed" || reservationStatus === "completed") {
+      return "Completed";
+    }
+    return "Confirmed";
+  };
+
   return {
     id: order.order_id?.toString() || order.id,
     orderId: order.id,
-
+    status: getBookingStatus(),
     reservation_id: reservation?.reservation_id,
     dateRange: formatDateRange(
       reservation?.check_in_datetime,
@@ -2514,7 +2532,11 @@ function MinimalBookingCard({
         borderRadius: 2,
         border: "1px solid",
         borderColor:
-          isTodayBooking || isWithin24HoursBooking ? "#f59e0b" : "grey.200",
+          isTodayBooking || isWithin24HoursBooking
+            ? "#f59e0b"
+            : status === "cancel"
+            ? "#fecaca"
+            : "grey.200",
         boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
         transition: "all 0.2s ease",
         "&:hover": {
@@ -2540,29 +2562,53 @@ function MinimalBookingCard({
               alignItems="center"
               sx={{ mb: 0.5 }}
             >
-              {(isTodayBooking || isWithin24HoursBooking) && (
+              {/* Status Badge */}
+              {status == "cancel" && (
                 <Box
                   sx={{
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    backgroundColor: "#fef3c7",
-                    border: "1px solid #fde68a",
-                    animation: "pulse 2s infinite",
+                    backgroundColor: statusColors.bg,
+                    border: `1px solid ${statusColors.border}`,
                   }}
                 >
                   <Typography
                     variant="caption"
                     sx={{
-                      color: "#d97706",
+                      color: statusColors.color,
                       fontWeight: 600,
                       fontSize: "0.75rem",
                     }}
                   >
-                    {getTodayLabel()}
+                    Cancelled
                   </Typography>
                 </Box>
               )}
+              {(isTodayBooking || isWithin24HoursBooking) &&
+                status !== "cancel" && (
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      backgroundColor: "#fef3c7",
+                      border: "1px solid #fde68a",
+                      animation: "pulse 2s infinite",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "#d97706",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      {getTodayLabel()}
+                    </Typography>
+                  </Box>
+                )}
             </Stack>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <CalendarIcon sx={{ fontSize: 14, color: "grey.500" }} />
@@ -2579,9 +2625,12 @@ function MinimalBookingCard({
             <Typography
               variant="h6"
               sx={{
-                color: "#059669",
+                color: status === "cancel" ? "#6b7280" : "#059669",
                 fontWeight: 700,
                 fontSize: "1.125rem",
+                ...(status === "cancel" && {
+                  textDecoration: "line-through",
+                }),
               }}
             >
               {price}
@@ -2600,7 +2649,7 @@ function MinimalBookingCard({
               sx={{
                 fontWeight: 600,
                 fontSize: "1rem",
-                color: "grey.900",
+                color: status === "cancel" ? "#6b7280" : "grey.900",
                 lineHeight: 1.3,
               }}
             >
@@ -2610,7 +2659,7 @@ function MinimalBookingCard({
           <Typography
             variant="body2"
             sx={{
-              color: "grey.600",
+              color: status === "cancel" ? "#9ca3af" : "grey.600",
               fontSize: "0.875rem",
               lineHeight: 1.4,
               display: "-webkit-box",
@@ -2639,14 +2688,29 @@ function MinimalBookingCard({
                 px: 1,
                 py: 0.25,
                 borderRadius: 1,
-                backgroundColor: alpha("#3b82f6", 0.1),
-                border: `1px solid ${alpha("#3b82f6", 0.2)}`,
+                backgroundColor: alpha(
+                  "#3b82f6",
+                  status === "cancel" ? 0.05 : 0.1
+                ),
+                border: `1px solid ${alpha(
+                  "#3b82f6",
+                  status === "cancel" ? 0.1 : 0.2
+                )}`,
               }}
             >
-              <PaymentIcon sx={{ fontSize: 12, color: "#3b82f6" }} />
+              <PaymentIcon
+                sx={{
+                  fontSize: 12,
+                  color: status === "cancel" ? "#9ca3af" : "#3b82f6",
+                }}
+              />
               <Typography
                 variant="caption"
-                sx={{ color: "#3b82f6", fontSize: "0.75rem", fontWeight: 500 }}
+                sx={{
+                  color: status === "cancel" ? "#9ca3af" : "#3b82f6",
+                  fontSize: "0.75rem",
+                  fontWeight: 500,
+                }}
               >
                 {paymentMethod}
               </Typography>
@@ -2661,14 +2725,29 @@ function MinimalBookingCard({
                 px: 1,
                 py: 0.25,
                 borderRadius: 1,
-                backgroundColor: alpha("#8b5cf6", 0.1),
-                border: `1px solid ${alpha("#8b5cf6", 0.2)}`,
+                backgroundColor: alpha(
+                  "#8b5cf6",
+                  status === "cancel" ? 0.05 : 0.1
+                ),
+                border: `1px solid ${alpha(
+                  "#8b5cf6",
+                  status === "cancel" ? 0.1 : 0.2
+                )}`,
               }}
             >
-              <AccessTimeIcon sx={{ fontSize: 12, color: "#8b5cf6" }} />
+              <AccessTimeIcon
+                sx={{
+                  fontSize: 12,
+                  color: status === "cancel" ? "#9ca3af" : "#8b5cf6",
+                }}
+              />
               <Typography
                 variant="caption"
-                sx={{ color: "#8b5cf6", fontSize: "0.75rem", fontWeight: 500 }}
+                sx={{
+                  color: status === "cancel" ? "#9ca3af" : "#8b5cf6",
+                  fontSize: "0.75rem",
+                  fontWeight: 500,
+                }}
               >
                 {duration}
               </Typography>
@@ -2680,13 +2759,23 @@ function MinimalBookingCard({
                 px: 1,
                 py: 0.25,
                 borderRadius: 1,
-                backgroundColor: alpha("#6b7280", 0.1),
-                border: `1px solid ${alpha("#6b7280", 0.2)}`,
+                backgroundColor: alpha(
+                  "#6b7280",
+                  status === "cancel" ? 0.05 : 0.1
+                ),
+                border: `1px solid ${alpha(
+                  "#6b7280",
+                  status === "cancel" ? 0.1 : 0.2
+                )}`,
               }}
             >
               <Typography
                 variant="caption"
-                sx={{ color: "#6b7280", fontSize: "0.75rem", fontWeight: 500 }}
+                sx={{
+                  color: status === "cancel" ? "#9ca3af" : "#6b7280",
+                  fontSize: "0.75rem",
+                  fontWeight: 500,
+                }}
               >
                 {bookingType}
               </Typography>
@@ -2699,7 +2788,7 @@ function MinimalBookingCard({
           <Typography
             variant="caption"
             sx={{
-              color: "grey.500",
+              color: status === "cancel" ? "#9ca3af" : "grey.500",
               fontSize: "0.75rem",
               fontFamily: "monospace",
               mb: 2,
@@ -2713,7 +2802,12 @@ function MinimalBookingCard({
         <Divider sx={{ my: 1.5, borderColor: "grey.200" }} />
 
         {/* Actions */}
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
+        <Stack
+          direction="row"
+          spacing={1}
+          justifyContent="flex-end"
+          alignItems="center"
+        >
           <Button
             variant={isPast ? "outlined" : "contained"}
             size="small"
@@ -2743,7 +2837,9 @@ function MinimalBookingCard({
           >
             {actionLabel}
           </Button>
-          {showCancelButton && (
+
+          {/* Show cancelled text when status is cancel */}
+          {status !== "cancel" && showCancelButton && (
             <Button
               variant="outlined"
               size="small"
@@ -2868,8 +2964,6 @@ export default function ProfileComponent() {
 
         return uploadedImageUrl;
       }
-
-      // throw new Error(response.data.message || "Upload failed");
     } catch (error: any) {
       console.error("❌ Profile Image Upload Failed:", error);
 
@@ -3002,6 +3096,18 @@ export default function ProfileComponent() {
     }
   }, [isHotelError, isHotelLoading, hotelError, hotelData, router]);
 
+  // Handle successful cancellation
+  useEffect(() => {
+    if (cancelData && !iscancelLoading && !iscancelError) {
+      // Refresh the orders to get updated status from server
+      if (user?.id) {
+        hotelMutation({
+          user_id: user.id,
+        });
+      }
+    }
+  }, [cancelData, iscancelLoading, iscancelError, hotelMutation, user?.id]);
+
   const handleCancelClick = (b: Booking) => {
     setTarget(b);
     setOpen(true);
@@ -3017,7 +3123,16 @@ export default function ProfileComponent() {
       cancelMutation({
         id: target.reservation_id,
       });
-      setUpcoming((prev) => prev.filter((b) => b.id !== target.id));
+
+      // Update the booking status to "cancel" instead of removing it
+      setUpcoming((prev) =>
+        prev.map((booking) =>
+          booking.id === target.id
+            ? { ...booking, status: "cancel" as const }
+            : booking
+        )
+      );
+
       toast.success("Booking cancelled successfully");
     }
     handleClose();
@@ -3294,7 +3409,7 @@ export default function ProfileComponent() {
                           },
                         }}
                       >
-                        {/* <EditIcon sx={{ fontSize: 18 }} /> */}
+                        <EditIcon sx={{ fontSize: 18 }} />
                       </IconButton>
                     </Box>
                     <Typography
@@ -3304,7 +3419,7 @@ export default function ProfileComponent() {
                         fontWeight: 500,
                       }}
                     >
-                      {user.email} • {user.phone || "not available"}
+                      {user?.email} • {user?.phone || "not available"}
                     </Typography>
                   </>
                 )}

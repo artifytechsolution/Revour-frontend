@@ -26,7 +26,6 @@ const AuthLayout: React.FC<ChildrenProps> = ({ children }) => {
     "/home",
     "/hourly",
     "/order",
-    "/profile",
     "/bookings",
     "/dashboard",
   ];
