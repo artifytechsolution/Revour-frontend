@@ -161,14 +161,14 @@ const Footer = () => {
               <span className="font-semibold text-green-400">Revour</span>. All
               rights reserved.
             </p>
-            <div className="mt-4 md:mt-0">
+            {/* <div className="mt-4 md:mt-0">
               <p className="text-gray-400">
                 Designed with by{" "}
                 <span className="text-green-400 border-b border-green-500">
                   Keval khetani & JBsoftTech Team
                 </span>
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

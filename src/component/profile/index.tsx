@@ -2879,7 +2879,7 @@ export default function ProfileComponent() {
     bio: "Hotel Guest",
     joinDate: "Joined 2024",
     avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
+      "https://apmpower.com/wp-content/uploads/2024/04/Achievements-dummy-profile.png",
   });
   const [isEditing, setIsEditing] = useState(false);
   const [orderList, setOrderList] = useState<OrderData[]>([]);
@@ -3066,7 +3066,7 @@ export default function ProfileComponent() {
 
       if (!userAvatar) {
         userAvatar =
-          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80";
+          "https://apmpower.com/wp-content/uploads/2024/04/Achievements-dummy-profile.png";
       }
 
       const updatedProfile = {
