@@ -1188,14 +1188,14 @@ const BookingPage = () => {
                                     icon={faPhone}
                                     className="text-green-500 mr-2.5 w-4"
                                   />
-                                  {hotel.phone}
+                                  {"7069287004"}
                                 </p>
                                 <p className="flex items-center text-sm sm:text-base">
                                   <FontAwesomeIcon
                                     icon={faEnvelope}
                                     className="text-green-500 mr-2.5 w-4"
                                   />
-                                  {hotel.email}
+                                  {"info@revourhotels.com"}
                                 </p>
                               </Link>
                             </div>

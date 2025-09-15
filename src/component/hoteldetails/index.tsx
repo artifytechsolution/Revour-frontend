@@ -2717,11 +2717,11 @@ const HotelDetailsComponent = ({ params }) => {
                 </p>
                 <p className="flex items-center">
                   <PhoneIcon className="text-green-500 mr-2 h-4 w-4" />
-                  {hotel.phone}
+                  {"7069287004"}
                 </p>
                 <p className="flex items-center">
                   <EmailIcon className="text-green-500 mr-2" />
-                  {hotel.email || "Info@revourhotels.com"}
+                  {"info@revourhotels.com"}
                 </p>
               </div>
             </div>
