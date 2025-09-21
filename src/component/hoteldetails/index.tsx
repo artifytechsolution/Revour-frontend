@@ -2921,19 +2921,6 @@ const HotelDetailsComponent = ({ params }) => {
               referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
           </div>
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-gray-600">
-            {[
-              { icon: SubwayIcon, text: "500m to metro station" },
-              { icon: RestaurantIcon, text: "Multiple restaurants nearby" },
-              { icon: AccountBalanceIcon, text: "1km to city center" },
-              { icon: FlightIcon, text: "15km to airport" },
-            ].map((item, index) => (
-              <div key={index} className="flex items-center text-sm">
-                <item.icon className="text-gray-400 mr-2" />
-                {item.text}
-              </div>
-            ))}
-          </div>
         </section>
 
         {/* Minimal Clean Design - Recommended */}
