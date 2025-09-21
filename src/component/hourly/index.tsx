@@ -1180,8 +1180,7 @@ const BookingPage = () => {
                                     icon={faMapMarkerAlt}
                                     className="text-green-500 mr-2.5 w-4"
                                   />
-                                  {hotel.address}
-                                  {hotel.city}, {hotel.country}
+                                  {hotel.address} ,{hotel.city}, {hotel.country}
                                 </p>
 
                                 <p className="flex items-center text-sm sm:text-base">
