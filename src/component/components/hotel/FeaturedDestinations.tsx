@@ -133,8 +133,8 @@ function FeaturedDestinations() {
 
   useEffect(() => {
     hotelMutation({
-      limit: HOTELS_PER_PAGE,
-      page: currentPage,
+      // limit: HOTELS_PER_PAGE,
+      // page: currentPage,
       search: hiteldetails?.destination || "Ahmedabad",
       checkin: hiteldetails?.checkIn || "",
       checkout: hiteldetails?.checkOut || "",
