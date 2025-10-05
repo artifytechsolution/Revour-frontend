@@ -2924,7 +2924,7 @@ const HotelDetailsComponent = ({ params }) => {
         </section>
 
         {/* Minimal Clean Design - Recommended */}
-        <div className="lg:hidden sticky bottom-0 bg-white border-t border-gray-200 -mx-4 -mb-6 px-4 py-3 shadow-lg">
+        <div className="lg:hidden  fixed bottom-[100px] w-full bg-white border-t border-gray-200 -mx-4 -mb-6 px-4 py-3 shadow-lg">
           <div className="flex items-center justify-between gap-3">
             {/* Price Info */}
             <div className="flex flex-col">
@@ -2933,7 +2933,7 @@ const HotelDetailsComponent = ({ params }) => {
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 ">
               {/* Conditional Hourly Button */}
               {hotel?.room_hourly_rates &&
                 hotel.room_hourly_rates.length > 0 && (
@@ -2941,8 +2941,8 @@ const HotelDetailsComponent = ({ params }) => {
                     onClick={() => setIsHourlyBookingOpen(true)}
                     className="bg-blue-600 text-white text-sm font-medium py-2.5 px-4 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
                   >
-                    <AccessTimeIcon className="w-4 h-4" />
-                    Hourly
+                    {/* <AccessTimeIcon className="w-4 h-4" /> */}
+                    Book Now
                   </button>
                 )}
             </div>
